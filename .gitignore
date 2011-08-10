@@ -1,0 +1,29 @@
+# Generic ignores
+bin/
+target
+gen/
+.metadata
+tmp/**
+.DS_Store
+*.tmp
+*.bak
+tmp/**/*
+*.swp
+*~.nib
+Thumbs.db
+Desktop.ini
+*~
+bin
+gen
+local.properties
+*.jar
+.classpath
+# Eclipse
+.settings
+.metadata
+Servers
+bin
+target
+*.properties
+*.cfg
+.project
