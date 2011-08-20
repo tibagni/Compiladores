@@ -1,6 +1,7 @@
 package vm.hardware;
 
 import java.util.HashMap;
+import javax.swing.JOptionPane;
 
 import vm.app.SourceLine;
 
@@ -67,78 +68,137 @@ public class Processor {
         INSTRUCTION_SET.put("RETURN", RETURN);
     }
 
-    public static void proccessLine(SourceLine line) {
+    public static boolean proccessLine(SourceLine line) {
+        boolean shouldIncrementPC = true;
+        boolean isFinished        = false;
+
         int insruction = INSTRUCTION_SET.get(line.mInstruction.toUpperCase());
         switch (insruction) {
             case LDC:
-                // LDC k
-                line.mComment = Memory.getInstance().ldc(Integer.parseInt(line.mAtt1));
+                // LDC k - Carregar constante
+                line.mComment = Memory.getInstance().doLdc(Integer.parseInt(line.mAtt1));
                 break;
             case LDV:
-                // LDV n
-                line.mComment = Memory.getInstance().ldv(Integer.parseInt(line.mAtt1));
+                // LDV n - Carregar valor
+                line.mComment = Memory.getInstance().doLdv(Integer.parseInt(line.mAtt1));
                 break;
             case ADD:
                 // ADD - Sem atributos
-                line.mComment = Memory.getInstance().add();
+                line.mComment = Memory.getInstance().doAdd();
                 break;
             case SUB:
                 // SUB - Sem atributos
-                line.mComment = Memory.getInstance().sub();
+                line.mComment = Memory.getInstance().doSub();
                 break;
             case MULT:
                 // MULT - Sem atributos
-                line.mComment = Memory.getInstance().mult();
+                line.mComment = Memory.getInstance().doMult();
                 break;
             case DIVI:
                 // DIVI - Sem atributos
-                line.mComment = Memory.getInstance().divi();
+                line.mComment = Memory.getInstance().doDivi();
                 break;
             case INV:
+                // INV - Sem atributos
+                line.mComment = Memory.getInstance().doInv();
                 break;
             case AND:
+                // AND - Sem atributos
+                line.mComment = Memory.getInstance().doAnd();
                 break;
             case OR:
+                // OR - Sem atributos
+                line.mComment = Memory.getInstance().doOr();
                 break;
             case NEG:
+                // NEG - Sem atributos
+                line.mComment = Memory.getInstance().doNeg();
                 break;
             case CME:
+                // CME - Sem atributos
+                line.mComment = Memory.getInstance().doCme();
                 break;
             case CMA:
+                // CMA - Sem atributos
+                line.mComment = Memory.getInstance().doCma();
                 break;
             case CEQ:
+                // CEQ - Sem atributos
+                line.mComment = Memory.getInstance().doCeq();
                 break;
             case CDIF:
+                // CDIF - Sem atributos
+                line.mComment = Memory.getInstance().doCdif();
                 break;
             case CMEQ:
+                // CMEQ - Sem atributos
+                line.mComment = Memory.getInstance().doCmeq();
                 break;
             case CMAQ:
+                // CMAQ - Sem atributos
+                line.mComment = Memory.getInstance().doCmaq();
                 break;
             case START:
-                line.mComment = Memory.getInstance().start();
+                // START - Sem atributos
+                line.mComment = Memory.getInstance().doStart();
                 break;
             case HLT:
+                // HLT - Sem atributos
+                isFinished = true;
+                line.mComment = Memory.getInstance().doHlt();
                 break;
             case STR:
+                // STR n
+                line.mComment = Memory.getInstance().doStr(Integer.parseInt(line.mAtt1));
                 break;
-            case JMP:
+            case JMP: 
+                // JMP t
+                shouldIncrementPC = false; // PC sera alterado na instrucao
+                line.mComment = Memory.getInstance().doJmp(Integer.parseInt(line.mAtt1));
                 break;
             case JMPF:
+                // JMPF t
+                shouldIncrementPC = false; // PC sera alterado na instrucao
+                line.mComment = Memory.getInstance().doJmpf(Integer.parseInt(line.mAtt1));
                 break;
             case NULL:
+                // NULL - Nao faz nada
                 break;
             case RD:
+                // RD (VALOR ENTRADO PELO USUARIO)
+                // TODO checar consistencia de inteiro
+                String valor = JOptionPane.showInputDialog("Entre com o Valor.");
+                line.mComment = Memory.getInstance().doRd(Integer.parseInt(valor));
                 break;
             case PRN:
+                // PRN - Sem atributos
+                line.mComment = Memory.getInstance().doPrn();
                 break;
             case ALLOC:
+                // ALLOC m,n
+                line.mComment = Memory.getInstance().doAlloc(Integer.parseInt(line.mAtt1),
+                        Integer.parseInt(line.mAtt2));
                 break;
             case DALLOC:
+                // DALLOC m,n
+                line.mComment = Memory.getInstance().doDalloc(Integer.parseInt(line.mAtt1),
+                        Integer.parseInt(line.mAtt2));
                 break;
             case CALL:
+                // CALL t
+                shouldIncrementPC = false; // PC sera alterado na instrucao
+                line.mComment = Memory.getInstance().doCall(Integer.parseInt(line.mAtt1));
                 break;
             case RETURN:
+                // RETURN - Sem atributos
+                shouldIncrementPC = false; // PC sera alterado na instrucao
+                line.mComment = Memory.getInstance().doReturn();
                 break;
         }
+        // Incrementa o program counter
+        if (shouldIncrementPC) {
+            Memory.getInstance().incProgramCounter();
+        }
+        return isFinished;
     }
 }

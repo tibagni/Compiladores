@@ -21,7 +21,7 @@ public class VirtualMachine {
         
         Processor.proccessLine(Memory.getInstance().getSourceLine(0));
         // TODO chamar metodo fireStructureDataSetChanged do table model cada vez que os dados forem alterados
-        // Cria a janela na thread de eventos AWT
+        // Cria a janela na thread de eventos EDT
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
