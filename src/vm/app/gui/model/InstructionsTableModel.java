@@ -49,8 +49,8 @@ public class InstructionsTableModel extends AbstractTableModel {
     @Override
     public String getColumnName(int column) {
         switch(column) {
-            case LINE:        return "Linha";
-            case LABEL:       return "Rótulo";
+            case LINE:        return "#";
+            case LABEL:       return "Rot";
             case INSTRUCTION: return "Instrução";
             case ATT1:        return "Atributo 1";
             case ATT2:        return "Atributo 2";

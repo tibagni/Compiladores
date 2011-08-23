@@ -6,6 +6,7 @@ import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import vm.app.InstructionSet;
 import vm.app.SourceLine;
 
 public class FileLoader {
@@ -29,42 +30,50 @@ public class FileLoader {
 
                 // Nao processa linhas vazias
                 if (line.length > 0) {
-                    sourceLine.mLineNumber = ++lineNumber;
+                    sourceLine.mLineNumber = lineNumber++;
                     if (line.length == 1) {
                         // Se houver apenas um elemento na linha, este elemento
                         // e a instrucao
                         sourceLine.mInstruction = line[0];
                     } else {
-                        try {
-                            // Tenta converter o segundo elemento da lista em inteiro
-                            // para verificar se e ou nao um atributo
-                            Integer.parseInt(line[1]);
-                            // Se executar a prtir daqui a conversao para inteiro funcionou
-                            // O primeiro elemento e uma instrucao e o segundo um atributo
-                            sourceLine.mInstruction = line[0];
-                            sourceLine.mAtt1 = line[1];
-                            
-                            // Verifica o segundo atributo
-                            if (line.length == 3) {
-                                sourceLine.mAtt2 = line[2];
-                            }
-                        } catch (NumberFormatException e) {
-                            // A conversao para inteiro falhou. O segundo elemento e a instrucao
+                        // Verifica se o segundo elemento e um atributo
+                        // (nao uma instrucao)
+                        if (InstructionSet.INSTRUCTION_SET.containsKey(line[1].toUpperCase())) {
+                            // O segundo elemento e a instrucao
                             // e o primeiro o label.
                             sourceLine.mLabel = line[0];
                             sourceLine.mInstruction = line[1];
-                            
+
                             // Verifica atributos
                             if (line.length == 3) { // Apenas um atributo
                                 sourceLine.mAtt1 = line[2];
                             } else if (line.length == 4) { // Dois atributos
                                 sourceLine.mAtt2 = line[3];
                             }
+                        } else {
+                            // Se executar a prtir daqui a conversao para inteiro
+                            // funcionou
+                            // O primeiro elemento e uma instrucao e o segundo um
+                            // atributo
+                            sourceLine.mInstruction = line[0];
+                            sourceLine.mAtt1 = line[1];
+    
+                            // Verifica o segundo atributo
+                            if (line.length == 3) {
+                                sourceLine.mAtt2 = line[2];
+                            }
                         }
                     }
                 }
                 // Adiciona linha de codigo na memoria do programa
                 Memory.getInstance().addSourceLine(sourceLine);
+                if (sourceLine.mLabel != null) {
+                    Memory.getInstance().setLabelInCache(sourceLine.mLabel, sourceLine.mLineNumber);
+                }
+            }
+            // Fecha o arquivo
+            if (input != null) {
+                input.close();
             }
         }
     }

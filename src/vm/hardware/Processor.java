@@ -1,195 +1,155 @@
 package vm.hardware;
 
-import java.util.HashMap;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 
+import vm.app.InstructionSet;
 import vm.app.SourceLine;
 
 public class Processor {
-    private static final HashMap<String, Integer> INSTRUCTION_SET = new HashMap<String, Integer>();
+    
+    private static Processor sInstance;
+    
+    private UiProcessorListener mListener;
 
-    private static final int                      LDC             = 0;
-    private static final int                      LDV             = 1;
-    private static final int                      ADD             = 2;
-    private static final int                      SUB             = 3;
-    private static final int                      MULT            = 4;
-    private static final int                      DIVI            = 5;
-    private static final int                      INV             = 6;
-    private static final int                      AND             = 7;
-    private static final int                      OR              = 8;
-    private static final int                      NEG             = 9;
-    private static final int                      CME             = 10;
-    private static final int                      CMA             = 11;
-    private static final int                      CEQ             = 12;
-    private static final int                      CDIF            = 13;
-    private static final int                      CMEQ            = 14;
-    private static final int                      CMAQ            = 15;
-    private static final int                      START           = 16;
-    private static final int                      HLT             = 17;
-    private static final int                      STR             = 18;
-    private static final int                      JMP             = 19;
-    private static final int                      JMPF            = 20;
-    private static final int                      NULL            = 21;
-    private static final int                      RD              = 22;
-    private static final int                      PRN             = 23;
-    private static final int                      ALLOC           = 24;
-    private static final int                      DALLOC          = 25;
-    private static final int                      CALL            = 26;
-    private static final int                      RETURN          = 27;
-
-    static {
-        INSTRUCTION_SET.put("LDC", LDC);
-        INSTRUCTION_SET.put("LDV", LDV);
-        INSTRUCTION_SET.put("ADD", ADD);
-        INSTRUCTION_SET.put("SUB", SUB);
-        INSTRUCTION_SET.put("MULT", MULT);
-        INSTRUCTION_SET.put("DIVI", DIVI);
-        INSTRUCTION_SET.put("INV", INV);
-        INSTRUCTION_SET.put("AND", AND);
-        INSTRUCTION_SET.put("OR", OR);
-        INSTRUCTION_SET.put("NEG", NEG);
-        INSTRUCTION_SET.put("CME", CME);
-        INSTRUCTION_SET.put("CMA", CMA);
-        INSTRUCTION_SET.put("CEQ", CEQ);
-        INSTRUCTION_SET.put("CDIF", CDIF);
-        INSTRUCTION_SET.put("CMEQ", CMEQ);
-        INSTRUCTION_SET.put("CMAQ", CMAQ);
-        INSTRUCTION_SET.put("START", START);
-        INSTRUCTION_SET.put("HLT", HLT);
-        INSTRUCTION_SET.put("STR", STR);
-        INSTRUCTION_SET.put("JMP", JMP);
-        INSTRUCTION_SET.put("JMPF", JMPF);
-        INSTRUCTION_SET.put("NULL", NULL);
-        INSTRUCTION_SET.put("RD", RD);
-        INSTRUCTION_SET.put("PRN", PRN);
-        INSTRUCTION_SET.put("ALLOC", ALLOC);
-        INSTRUCTION_SET.put("DALLOC", DALLOC);
-        INSTRUCTION_SET.put("CALL", CALL);
-        INSTRUCTION_SET.put("RETURN", RETURN);
+    private Processor() { }
+    
+    public static Processor getInstance() {
+        if (sInstance == null) {
+            sInstance = new Processor();
+        }
+        return sInstance;
     }
 
-    public static boolean proccessLine(SourceLine line) {
+    public void setListener(UiProcessorListener listener) {
+        mListener = listener;
+    }
+
+    public boolean proccessNextLine() {
+        int programCounter = Memory.getInstance().getNextInstructionIndex();
+        SourceLine line = Memory.getInstance().getSourceLine(programCounter);
+
         boolean shouldIncrementPC = true;
         boolean isFinished        = false;
 
-        int insruction = INSTRUCTION_SET.get(line.mInstruction.toUpperCase());
+        int insruction = InstructionSet.INSTRUCTION_SET.get(line.mInstruction.toUpperCase());
         switch (insruction) {
-            case LDC:
+            case InstructionSet.LDC:
                 // LDC k - Carregar constante
                 line.mComment = Memory.getInstance().doLdc(Integer.parseInt(line.mAtt1));
                 break;
-            case LDV:
+            case InstructionSet.LDV:
                 // LDV n - Carregar valor
                 line.mComment = Memory.getInstance().doLdv(Integer.parseInt(line.mAtt1));
                 break;
-            case ADD:
+            case InstructionSet.ADD:
                 // ADD - Sem atributos
                 line.mComment = Memory.getInstance().doAdd();
                 break;
-            case SUB:
+            case InstructionSet.SUB:
                 // SUB - Sem atributos
                 line.mComment = Memory.getInstance().doSub();
                 break;
-            case MULT:
+            case InstructionSet.MULT:
                 // MULT - Sem atributos
                 line.mComment = Memory.getInstance().doMult();
                 break;
-            case DIVI:
+            case InstructionSet.DIVI:
                 // DIVI - Sem atributos
                 line.mComment = Memory.getInstance().doDivi();
                 break;
-            case INV:
+            case InstructionSet.INV:
                 // INV - Sem atributos
                 line.mComment = Memory.getInstance().doInv();
                 break;
-            case AND:
+            case InstructionSet.AND:
                 // AND - Sem atributos
                 line.mComment = Memory.getInstance().doAnd();
                 break;
-            case OR:
+            case InstructionSet.OR:
                 // OR - Sem atributos
                 line.mComment = Memory.getInstance().doOr();
                 break;
-            case NEG:
+            case InstructionSet.NEG:
                 // NEG - Sem atributos
                 line.mComment = Memory.getInstance().doNeg();
                 break;
-            case CME:
+            case InstructionSet.CME:
                 // CME - Sem atributos
                 line.mComment = Memory.getInstance().doCme();
                 break;
-            case CMA:
+            case InstructionSet.CMA:
                 // CMA - Sem atributos
                 line.mComment = Memory.getInstance().doCma();
                 break;
-            case CEQ:
+            case InstructionSet.CEQ:
                 // CEQ - Sem atributos
                 line.mComment = Memory.getInstance().doCeq();
                 break;
-            case CDIF:
+            case InstructionSet.CDIF:
                 // CDIF - Sem atributos
                 line.mComment = Memory.getInstance().doCdif();
                 break;
-            case CMEQ:
+            case InstructionSet.CMEQ:
                 // CMEQ - Sem atributos
                 line.mComment = Memory.getInstance().doCmeq();
                 break;
-            case CMAQ:
+            case InstructionSet.CMAQ:
                 // CMAQ - Sem atributos
                 line.mComment = Memory.getInstance().doCmaq();
                 break;
-            case START:
+            case InstructionSet.START:
                 // START - Sem atributos
                 line.mComment = Memory.getInstance().doStart();
                 break;
-            case HLT:
+            case InstructionSet.HLT:
                 // HLT - Sem atributos
                 isFinished = true;
                 line.mComment = Memory.getInstance().doHlt();
                 break;
-            case STR:
+            case InstructionSet.STR:
                 // STR n
                 line.mComment = Memory.getInstance().doStr(Integer.parseInt(line.mAtt1));
                 break;
-            case JMP: 
+            case InstructionSet.JMP: 
                 // JMP t
                 shouldIncrementPC = false; // PC sera alterado na instrucao
-                line.mComment = Memory.getInstance().doJmp(Integer.parseInt(line.mAtt1));
+                line.mComment = Memory.getInstance().doJmp(line.mAtt1);
                 break;
-            case JMPF:
+            case InstructionSet.JMPF:
                 // JMPF t
                 shouldIncrementPC = false; // PC sera alterado na instrucao
-                line.mComment = Memory.getInstance().doJmpf(Integer.parseInt(line.mAtt1));
+                line.mComment = Memory.getInstance().doJmpf(line.mAtt1);
                 break;
-            case NULL:
+            case InstructionSet.NULL:
                 // NULL - Nao faz nada
                 break;
-            case RD:
+            case InstructionSet.RD:
                 // RD (VALOR ENTRADO PELO USUARIO)
                 // TODO checar consistencia de inteiro
                 String valor = JOptionPane.showInputDialog("Entre com o Valor.");
                 line.mComment = Memory.getInstance().doRd(Integer.parseInt(valor));
                 break;
-            case PRN:
+            case InstructionSet.PRN:
                 // PRN - Sem atributos
                 line.mComment = Memory.getInstance().doPrn();
                 break;
-            case ALLOC:
+            case InstructionSet.ALLOC:
                 // ALLOC m,n
                 line.mComment = Memory.getInstance().doAlloc(Integer.parseInt(line.mAtt1),
                         Integer.parseInt(line.mAtt2));
                 break;
-            case DALLOC:
+            case InstructionSet.DALLOC:
                 // DALLOC m,n
                 line.mComment = Memory.getInstance().doDalloc(Integer.parseInt(line.mAtt1),
                         Integer.parseInt(line.mAtt2));
                 break;
-            case CALL:
+            case InstructionSet.CALL:
                 // CALL t
                 shouldIncrementPC = false; // PC sera alterado na instrucao
-                line.mComment = Memory.getInstance().doCall(Integer.parseInt(line.mAtt1));
+                line.mComment = Memory.getInstance().doCall(line.mAtt1);
                 break;
-            case RETURN:
+            case InstructionSet.RETURN:
                 // RETURN - Sem atributos
                 shouldIncrementPC = false; // PC sera alterado na instrucao
                 line.mComment = Memory.getInstance().doReturn();
@@ -199,6 +159,27 @@ public class Processor {
         if (shouldIncrementPC) {
             Memory.getInstance().incProgramCounter();
         }
+
+        if (mListener != null) {
+            // Chama o callback do listener na EDT
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    mListener.onInstructionExecuted();
+                }
+            });
+        }
+
         return isFinished;
+    }
+
+    // INNER CLASSES
+    
+    /**
+     * Listener para atualizar componentes de interface grafica
+     * Roda na EDT
+     */
+    public static interface UiProcessorListener {
+        public void onInstructionExecuted();
     }
 }

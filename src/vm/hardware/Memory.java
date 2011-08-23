@@ -1,6 +1,7 @@
 package vm.hardware;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import vm.app.SourceLine;
 
@@ -16,15 +17,22 @@ public class Memory {
     private int[] mMemoryStack;
     // Topo da pilha (memoria)
     private int mTop;
+
+    // Cache com os valores de <label, numero de linha>
+    private HashMap<String, Integer> mLabelsCache = new HashMap<String, Integer>();
     
     private static final int MEMORY_SIZE = 1024;
 
     private static final int TRUE  = 1;
     private static final int FALSE = 0;
 
+    /*
+     * Singleton - Apenas uma memoria na maquina virtual
+     * Instancia unica criada por getInstance
+     */
     private Memory() {
         mMemoryStack = new int[MEMORY_SIZE];
-        mTop = -1; // Primeira posicao e 0. Inicialmente a memoria esta vazia (-1)
+        mTop = -1; // Primeira posicao eh 0. Inicialmente a memoria esta vazia (-1)
         mSourceCodeMemory = new ArrayList<SourceLine>();
         mProgramCounter = 0;
     }
@@ -61,11 +69,19 @@ public class Memory {
         return mSourceCodeMemory.size();
     }
 
-    public void incProgramCounter() {
+    public synchronized void setLabelInCache(String label, int lineNumber) {
+        mLabelsCache.put(label, lineNumber);
+    }
+
+    private int getLineNumberFromLabel(String label) {
+        return mLabelsCache.get(label);
+    }
+
+    public synchronized void incProgramCounter() {
         mProgramCounter++;
     }
 
-    public synchronized int getNextInstructionIndex() {
+    /* package */ synchronized int getNextInstructionIndex() {
         return mProgramCounter;
     }
 
@@ -171,12 +187,11 @@ public class Memory {
       * @return Comentario
       */
      public String doAnd() {
-        if(mMemoryStack[mTop - 1] == TRUE && mMemoryStack[mTop] == TRUE)
+        if(mMemoryStack[mTop - 1] == TRUE && mMemoryStack[mTop] == TRUE) {
             mMemoryStack[mTop - 1] = TRUE;
-
-        else
+        } else {
             mMemoryStack[mTop - 1] = FALSE;
-
+        }
         mTop--;
 
         return "se M[s-1]=1 e M[s]=1  então M[s-1]:=1  senão M[s-1]:=0;  s:=s-1";
@@ -188,12 +203,11 @@ public class Memory {
       * @return Comentario
       */
     public String doOr() {
-        if(mMemoryStack[mTop - 1] == TRUE || mMemoryStack[mTop] == TRUE)
+        if(mMemoryStack[mTop - 1] == TRUE || mMemoryStack[mTop] == TRUE) {
             mMemoryStack[mTop - 1] = TRUE;
-
-        else
+        } else {
             mMemoryStack[mTop - 1] = FALSE;
-
+        }
         mTop--;
 
         return "se M[s-1]=1  ou M[s]=1  então M[s-1]:=1  senão M[s-1]:=0; s:=s-1";
@@ -218,12 +232,11 @@ public class Memory {
      * @return Comentario
      */
     public String doCme() {
-        if(mMemoryStack[mTop - 1] < mMemoryStack[mTop])
+        if(mMemoryStack[mTop - 1] < mMemoryStack[mTop]) {
             mMemoryStack[mTop - 1] = TRUE;
-
-        else
+        } else {
             mMemoryStack[mTop - 1] = FALSE;
-
+        }
         mTop--;
         
         return "se M[s-1]<M[s]  então M[s-1]:=1  senão M[s-1]:=0; s:=s-1";
@@ -361,10 +374,10 @@ public class Memory {
      * @param t Posicao
      * @return Comentario
      */
-    public String doJmp(int t) {
-        mProgramCounter = t;
+    public String doJmp(String t) {
+        mProgramCounter = getLineNumberFromLabel(t);
 
-        return "i:= t";
+        return "i:=t";
     }
 
 
@@ -374,8 +387,9 @@ public class Memory {
      * @return Comentario
      */
     public String doPrn() {
-        mTop--;
+        System.out.println("saida: " + mMemoryStack[mTop]);
         // TODO jogar valor na saida padrao
+        mTop--;
         return "Imprimir M[s]; s:=s-1";
     }
 
@@ -387,7 +401,7 @@ public class Memory {
      * @return Comentario
      */
     public String doAlloc(int m, int n) {
-        for(int k = 0; k < n-1; k++){
+        for(int k = 0; k <= n - 1; k++){
            mTop++;
            mMemoryStack[mTop] = mMemoryStack[m + k];
         }
@@ -402,9 +416,9 @@ public class Memory {
      * @return Comentario
      */
     public String doDalloc(int m, int n) {
-        for(int k = n-1; k >= 0; k--){
+        for(int k = n - 1; k >= 0; k--){
             mMemoryStack[m + k] = mMemoryStack[mTop];
-            mTop++;
+            mTop--;
         }
 
         return " - ";
@@ -428,10 +442,10 @@ public class Memory {
      * @param t Endereco da funcao
      * @return Comentario
      */
-    public String doCall(int t) {
+    public String doCall(String t) {
         mTop++;
         mMemoryStack[mTop] = mProgramCounter + 1;
-        mProgramCounter = t;
+        mProgramCounter = getLineNumberFromLabel(t);
 
         return "S:=s+1; M[s]:=i+1; i:=t";
     }
@@ -442,14 +456,14 @@ public class Memory {
      * @param t Endereco em que o programa sera desviado
      * @returnComentario
      */
-    public String doJmpf(int t) {
+    public String doJmpf(String t) {
         if (mMemoryStack[mTop] == FALSE) {
-            mProgramCounter = t;
+            mProgramCounter = getLineNumberFromLabel(t);
         } else {
             incProgramCounter();
         }
+        mTop--;
 
         return " - ";
     }
-
 }
