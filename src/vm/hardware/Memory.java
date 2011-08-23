@@ -50,7 +50,7 @@ public class Memory {
 
     public int getData(int position) {
         if (position < 0 || position > (mTop + 1)) {
-            throw new ArrayIndexOutOfBoundsException("Posicao nao existe na memoria");
+            throw new ArrayIndexOutOfBoundsException("Posicao nao existe na memoria: " + position);
         }
         return mMemoryStack[position];
     }
@@ -81,7 +81,18 @@ public class Memory {
         mProgramCounter++;
     }
 
-    /* package */ synchronized int getNextInstructionIndex() {
+    /* package */ void cleanMemory() {
+        mProgramCounter = 0;
+        mTop = -1;
+    }
+
+    /* package */ void cleanComments() {
+        for (SourceLine l : mSourceCodeMemory) {
+            l.mComment = null;
+        }
+    }
+
+    /* package */ int getNextInstructionIndex() {
         return mProgramCounter;
     }
 
@@ -387,8 +398,8 @@ public class Memory {
      * @return Comentario
      */
     public String doPrn() {
-        System.out.println("saida: " + mMemoryStack[mTop]);
-        // TODO jogar valor na saida padrao
+        // joga valor na saida padrao
+        OutputStream.getInstance().appendOutput("Saída: " + mMemoryStack[mTop]);
         mTop--;
         return "Imprimir M[s]; s:=s-1";
     }

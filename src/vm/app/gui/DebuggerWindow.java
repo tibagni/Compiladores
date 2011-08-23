@@ -17,6 +17,7 @@ import javax.swing.JTextArea;
 
 import vm.app.gui.model.InstructionsTableModel;
 import vm.app.gui.model.MemoryTableModel;
+import vm.app.gui.model.OutputTextAreaModel;
 import vm.hardware.Processor;
 import vm.hardware.Processor.UiProcessorListener;
 
@@ -48,6 +49,7 @@ public class DebuggerWindow extends JFrame implements UiProcessorListener {
     // Models
     private MemoryTableModel mStackTableModel;
     private InstructionsTableModel mInstructionsModel;
+    private OutputTextAreaModel mOutputModel;
     
     /**
      * Consttrutor padrao. Cria layout da janela.
@@ -59,6 +61,8 @@ public class DebuggerWindow extends JFrame implements UiProcessorListener {
         createMenu();
         createWindowLayout();
         pack();
+        // Por fim seta listener para processador
+        Processor.getInstance().setListener(this);
     }
 
     /**
@@ -138,6 +142,7 @@ public class DebuggerWindow extends JFrame implements UiProcessorListener {
         mOutputPanel = new JPanel();
         mOutputPanel.setBorder(BorderFactory.createTitledBorder("Saída"));
         mOutputTxt = new JTextArea(7, 20);
+        mOutputModel = new OutputTextAreaModel(mOutputTxt);
         mOutputPanel.add(mOutputTxt);
         
         mSouthPanel.add(mOutputPanel, BorderLayout.EAST);
@@ -168,7 +173,6 @@ public class DebuggerWindow extends JFrame implements UiProcessorListener {
                 // TODO implementar modo um por vez e programa todo
                 while (!Processor.getInstance().proccessNextLine()) {
                 }
-                System.out.println("hjsak;h");
             }
         });
     }
@@ -177,6 +181,23 @@ public class DebuggerWindow extends JFrame implements UiProcessorListener {
     public void onInstructionExecuted() {
         mStackTableModel.fireTableStructureChanged();
         mInstructionsModel.fireTableStructureChanged();
-        // TODO implementar model para entradas e saidas
+        mOutputModel.fireTextAreaStructureChanged();
+    }
+
+    @Override
+    public void onInputEntered(String inputValue) {
+        mInputTxt.append("Entrada: " + inputValue);
+    }
+
+    @Override
+    public void onProgramFinished() {
+        // TODO seila
+    }
+
+    @Override
+    public void onRestartProgram() {
+        mInputTxt.setText("");
+        mOutputModel.resetModel();
+        mInstructionsModel.fireTableStructureChanged();
     }
 }

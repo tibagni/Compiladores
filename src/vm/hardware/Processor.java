@@ -12,6 +12,8 @@ public class Processor {
     
     private UiProcessorListener mListener;
 
+    boolean mIsFinished = false;
+
     private Processor() { }
     
     public static Processor getInstance() {
@@ -26,11 +28,19 @@ public class Processor {
     }
 
     public boolean proccessNextLine() {
+        boolean shouldIncrementPC = true;
+
+        if (mIsFinished) {
+            // Reinicia o estado do programa
+            Memory.getInstance().cleanMemory();
+            Memory.getInstance().cleanComments();
+            if (mListener != null) {
+                mListener.onRestartProgram();
+            }
+            mIsFinished = false;
+        }
         int programCounter = Memory.getInstance().getNextInstructionIndex();
         SourceLine line = Memory.getInstance().getSourceLine(programCounter);
-
-        boolean shouldIncrementPC = true;
-        boolean isFinished        = false;
 
         int insruction = InstructionSet.INSTRUCTION_SET.get(line.mInstruction.toUpperCase());
         switch (insruction) {
@@ -104,7 +114,7 @@ public class Processor {
                 break;
             case InstructionSet.HLT:
                 // HLT - Sem atributos
-                isFinished = true;
+                mIsFinished = true;
                 line.mComment = Memory.getInstance().doHlt();
                 break;
             case InstructionSet.STR:
@@ -127,8 +137,19 @@ public class Processor {
             case InstructionSet.RD:
                 // RD (VALOR ENTRADO PELO USUARIO)
                 // TODO checar consistencia de inteiro
-                String valor = JOptionPane.showInputDialog("Entre com o Valor.");
+                final String valor = JOptionPane.showInputDialog("Entre com o Valor.");
                 line.mComment = Memory.getInstance().doRd(Integer.parseInt(valor));
+                
+                // Atualiza Ui para mostrar entrada
+                if (mListener != null) {
+                    // Chama o callback do listener na EDT
+                    SwingUtilities.invokeLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            mListener.onInputEntered(valor);
+                        }
+                    });
+                }
                 break;
             case InstructionSet.PRN:
                 // PRN - Sem atributos
@@ -160,17 +181,20 @@ public class Processor {
             Memory.getInstance().incProgramCounter();
         }
 
+        final boolean callFinished = mIsFinished;
         if (mListener != null) {
             // Chama o callback do listener na EDT
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
                     mListener.onInstructionExecuted();
+                    if (callFinished) {
+                        mListener.onProgramFinished();
+                    }
                 }
             });
         }
-
-        return isFinished;
+        return mIsFinished;
     }
 
     // INNER CLASSES
@@ -181,5 +205,8 @@ public class Processor {
      */
     public static interface UiProcessorListener {
         public void onInstructionExecuted();
+        public void onInputEntered(String input);
+        public void onProgramFinished();
+        public void onRestartProgram();
     }
 }
