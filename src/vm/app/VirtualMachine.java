@@ -1,11 +1,8 @@
 package vm.app;
 
-import java.io.File;
-
 import javax.swing.SwingUtilities;
 
 import vm.app.gui.DebuggerWindow;
-import vm.hardware.FileLoader;
 import vm.operation.BackgroundOperation;
 
 public class VirtualMachine {

@@ -7,6 +7,7 @@ import java.awt.event.ActionListener;
 import java.io.File;
 
 import javax.swing.BorderFactory;
+import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -14,9 +15,11 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
+import javax.swing.ListSelectionModel;
 
 import vm.app.gui.model.InstructionsTableModel;
 import vm.app.gui.model.MemoryTableModel;
@@ -45,6 +48,8 @@ public class DebuggerWindow extends JFrame implements UiProcessorListener {
     private JMenu mFileMenu;
     private JMenu mRunMenu;
     private JMenuItem mOpenFile;
+    private JRadioButtonMenuItem mStepByStepMode;
+    private JRadioButtonMenuItem mRunAtOnceMode;
 
     // Paineis
     private JPanel mStackPanel;
@@ -108,11 +113,20 @@ public class DebuggerWindow extends JFrame implements UiProcessorListener {
         mOpenFile.setText("Abrir Arquivo");
         mRunMenu = new JMenu();
         mRunMenu.setText("Executar");
+        mRunAtOnceMode = new JRadioButtonMenuItem("Modo corrido");
+        mRunAtOnceMode.setSelected(true);
+        mStepByStepMode = new JRadioButtonMenuItem("Modo passo a passo");
+        
+        ButtonGroup runMenuGroup = new ButtonGroup();
+        runMenuGroup.add(mRunAtOnceMode);
+        runMenuGroup.add(mStepByStepMode);
 
         mMenuBar.add(mFileMenu);
         mMenuBar.add(mRunMenu);
         setJMenuBar(mMenuBar);
         mFileMenu.add(mOpenFile);
+        mRunMenu.add(mRunAtOnceMode);
+        mRunMenu.add(mStepByStepMode);
 
         mOpenFile.addActionListener(new ActionListener() {
             @Override
@@ -131,6 +145,20 @@ public class DebuggerWindow extends JFrame implements UiProcessorListener {
                 }
             }
         });
+
+        ActionListener runModeAction = new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (mRunAtOnceMode.isSelected()) {
+                    mRunMode = RUN_ALL_AT_ONCE;
+                } else if (mStepByStepMode.isSelected()) {
+                    mRunMode = RUN_STEP_BY_STEP;
+                }
+            }
+        };
+
+        mRunAtOnceMode.addActionListener(runModeAction);
+        mStepByStepMode.addActionListener(runModeAction);
     }
 
     /**
@@ -181,6 +209,7 @@ public class DebuggerWindow extends JFrame implements UiProcessorListener {
         mContentPanel = new JPanel();
         mInstructionsModel = new InstructionsTableModel();
         mInstructionsTable = new JTable(mInstructionsModel);
+        mInstructionsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         mInstructionsScroll = new JScrollPane(mInstructionsTable, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
                 JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 
@@ -235,14 +264,13 @@ public class DebuggerWindow extends JFrame implements UiProcessorListener {
         mSouthPanel.validate();
         getContentPane().add(mSouthPanel, BorderLayout.SOUTH);
         
-        final short runMode = mRunMode;
         mRunBtn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 // Executa as instrucoes na thread de background
-                if (runMode == RUN_ALL_AT_ONCE) {
+                if (mRunMode == RUN_ALL_AT_ONCE) {
                     BackgroundOperation.runOnBackgroundThread(sRunAllAtOnce);
-                } else if (runMode == RUN_STEP_BY_STEP) {
+                } else if (mRunMode == RUN_STEP_BY_STEP) {
                     BackgroundOperation.runOnBackgroundThread(sRunStepByStep);                    
                 }
             }
@@ -250,12 +278,22 @@ public class DebuggerWindow extends JFrame implements UiProcessorListener {
     }
 
     @Override
-    public void onInstructionExecuted() {
+    public void onInstructionExecuted(int lineNumber) {
         mStackTableModel.fireTableStructureChanged();
         mInstructionsModel.fireTableStructureChanged();
         mOutputModel.fireTextAreaStructureChanged();
+
+        // Muda o highlight da tabela para a instrucao atual
+        mInstructionsTable.getSelectionModel().setSelectionInterval(0, lineNumber); // O primeiro valor nao importa
         
-        // TODO muda o highlight da tabela para a instrucao atual
+        // Muda o scroll da tela para acompanhar a execucao. Mas somente se for necessario
+        int currentScrollValue = mInstructionsScroll.getVerticalScrollBar().getValue();
+        int rowHeight = mInstructionsTable.getRowHeight();
+        if (((currentScrollValue + lineNumber) * rowHeight) > 
+        mInstructionsScroll.getVerticalScrollBar().getVisibleAmount()) { 
+            // Move o scroll para ate 5 linhas antes para ter uma visao mais geral das instrucoes
+            mInstructionsScroll.getVerticalScrollBar().setValue((lineNumber - 5) * rowHeight);
+        }
     }
 
     @Override
@@ -265,8 +303,6 @@ public class DebuggerWindow extends JFrame implements UiProcessorListener {
 
     @Override
     public void onProgramFinished() {
-        // TODO seila
-    	
     }
 
     @Override

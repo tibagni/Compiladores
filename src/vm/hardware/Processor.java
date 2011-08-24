@@ -45,7 +45,7 @@ public class Processor {
             mIsFinished = false;
         }
         int programCounter = Memory.getInstance().getNextInstructionIndex();
-        SourceLine line = Memory.getInstance().getSourceLine(programCounter);
+        final SourceLine line = Memory.getInstance().getSourceLine(programCounter);
 
         int insruction = InstructionSet.INSTRUCTION_SET.get(line.mInstruction.toUpperCase());
         switch (insruction) {
@@ -192,7 +192,7 @@ public class Processor {
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
-                    mListener.onInstructionExecuted();
+                    mListener.onInstructionExecuted(line.mLineNumber);
                     if (callFinished) {
                         mListener.onProgramFinished();
                     }
@@ -209,7 +209,7 @@ public class Processor {
      * Roda na EDT
      */
     public static interface UiProcessorListener {
-        public void onInstructionExecuted();
+        public void onInstructionExecuted(int lineNumber);
         public void onInputEntered(String input);
         public void onProgramFinished();
         public void onRestartProgram();
