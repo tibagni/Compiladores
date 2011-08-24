@@ -86,11 +86,16 @@ public class Memory {
         mTop = -1;
     }
 
-    /* package */ void cleanComments() {
-        for (SourceLine l : mSourceCodeMemory) {
-            l.mComment = null;
+    /* package */ synchronized void cleanComments() {
+        for (SourceLine line : mSourceCodeMemory) {
+            line.mComment = null;
         }
     }
+    
+    public synchronized void cleanSourceCode() {
+    	mSourceCodeMemory.removeAll(mSourceCodeMemory);
+    }
+    
 
     /* package */ int getNextInstructionIndex() {
         return mProgramCounter;
@@ -260,12 +265,11 @@ public class Memory {
      * @return Comentario
      */
     public String doCma() {
-        if(mMemoryStack[mTop - 1] > mMemoryStack[mTop])
+        if(mMemoryStack[mTop - 1] > mMemoryStack[mTop]) {
             mMemoryStack[mTop - 1] = TRUE;
-
-        else
+        } else {
             mMemoryStack[mTop - 1] = FALSE;
-
+        }
         mTop--;
 
         return "se M[s-1]>M[s]  então M[s-1]:=1  senão M[s-1]:=0; s:=s-1";
@@ -278,12 +282,11 @@ public class Memory {
      * @return Comentario
      */
     public String doCeq() {
-        if(mMemoryStack[mTop - 1] == mMemoryStack[mTop])
+        if(mMemoryStack[mTop - 1] == mMemoryStack[mTop]) {
             mMemoryStack[mTop - 1] = TRUE;
-
-        else
+        } else {
             mMemoryStack[mTop - 1] = FALSE;
-
+        }
         mTop--;
 
         return "se M[s-1]=M[s]  então M[s-1]:=1  senão M[s-1]:=0; s:=s-1";
@@ -296,12 +299,11 @@ public class Memory {
      * @return Comentario
      */
     public String doCdif() {
-        if(mMemoryStack[mTop - 1] != mMemoryStack[mTop])
+        if(mMemoryStack[mTop - 1] != mMemoryStack[mTop]) {
             mMemoryStack[mTop - 1] = TRUE;
-
-        else
+        } else {
             mMemoryStack[mTop - 1] = FALSE;
-
+        }
         mTop--;
 
         return "se M[s-1] != M[s]  então M[s-1]:=1  senão M[s-1]:=0; s:=s-1";
@@ -314,12 +316,11 @@ public class Memory {
      * @return Comentario
      */
     public String doCmeq() {
-        if(mMemoryStack[mTop - 1] <= mMemoryStack[mTop])
+        if(mMemoryStack[mTop - 1] <= mMemoryStack[mTop]) {
             mMemoryStack[mTop - 1] = TRUE;
-
-        else
+        } else {
             mMemoryStack[mTop - 1] = FALSE;
-
+        }
         mTop--;
 
         return "se M[s-1] <= M[s]  então M[s-1]:=1  senão M[s-1]:=0; s:=s-1";
@@ -332,12 +333,11 @@ public class Memory {
      * @return Comentario
      */
     public String doCmaq() {
-        if(mMemoryStack[mTop - 1] >= mMemoryStack[mTop])
+        if(mMemoryStack[mTop - 1] >= mMemoryStack[mTop]) {
             mMemoryStack[mTop - 1] = TRUE;
-
-        else
+        } else {
             mMemoryStack[mTop - 1] = FALSE;
-
+        }
         mTop--;
 
         return "se M[s-1] >= M[s]  então M[s-1]:=1  senão M[s-1]:=0; s:=s-1";
@@ -399,7 +399,7 @@ public class Memory {
      */
     public String doPrn() {
         // joga valor na saida padrao
-        OutputStream.getInstance().appendOutput("Saída: " + mMemoryStack[mTop]);
+        StdOut.getInstance().appendOutput("Saída: " + mMemoryStack[mTop]);
         mTop--;
         return "Imprimir M[s]; s:=s-1";
     }
@@ -431,7 +431,6 @@ public class Memory {
             mMemoryStack[m + k] = mMemoryStack[mTop];
             mTop--;
         }
-
         return " - ";
     }
 

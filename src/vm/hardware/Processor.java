@@ -30,6 +30,8 @@ public class Processor {
     public boolean proccessNextLine() {
         boolean shouldIncrementPC = true;
 
+        // Se o programa for reinicializado ou outro programa for inicializar
+        // Os recursos precisam ser liberados para a nova execucao
         if (mIsFinished) {
             // Reinicia o estado do programa
             Memory.getInstance().cleanMemory();
@@ -37,6 +39,9 @@ public class Processor {
             if (mListener != null) {
                 mListener.onRestartProgram();
             }
+            
+            // O estado da execucao so pode ser resetado aqui
+            // para nao gerar inconsistencias
             mIsFinished = false;
         }
         int programCounter = Memory.getInstance().getNextInstructionIndex();

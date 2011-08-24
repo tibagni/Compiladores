@@ -4,12 +4,15 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -18,21 +21,30 @@ import javax.swing.JTextArea;
 import vm.app.gui.model.InstructionsTableModel;
 import vm.app.gui.model.MemoryTableModel;
 import vm.app.gui.model.OutputTextAreaModel;
+import vm.hardware.FileLoader;
+import vm.hardware.Memory;
 import vm.hardware.Processor;
 import vm.hardware.Processor.UiProcessorListener;
+import vm.operation.BackgroundOperation;
 
 @SuppressWarnings("serial")
 public class DebuggerWindow extends JFrame implements UiProcessorListener {
+    private static final short RUN_ALL_AT_ONCE  = 0;
+    private static final short RUN_STEP_BY_STEP = 1;
+    
     private JButton mRunBtn;
     private JTextArea mOutputTxt;
     private JTextArea mInputTxt;
     private JTable mInstructionsTable;
     private JTable mStackTable;
-
+    private JFileChooser mFileChooser;
+    private File mFile;
+    
     // Menus
     private JMenuBar mMenuBar;
     private JMenu mFileMenu;
     private JMenu mRunMenu;
+    private JMenuItem mOpenFile;
 
     // Paineis
     private JPanel mStackPanel;
@@ -50,9 +62,28 @@ public class DebuggerWindow extends JFrame implements UiProcessorListener {
     private MemoryTableModel mStackTableModel;
     private InstructionsTableModel mInstructionsModel;
     private OutputTextAreaModel mOutputModel;
+
+    private short mRunMode = RUN_ALL_AT_ONCE; // Modo padrao
+
+    private static final Runnable sRunAllAtOnce = new Runnable() {
+        @Override
+        public void run() {
+            while (!Processor.getInstance().proccessNextLine()) {
+                // Nao faz nada
+            }
+        }
+    };
+
+    private static final Runnable sRunStepByStep = new Runnable() {
+        @Override
+        public void run() {
+            Processor.getInstance().proccessNextLine();
+        }
+    };
+
     
     /**
-     * Consttrutor padrao. Cria layout da janela.
+     * Construtor padrao. Cria layout da janela.
      */
     public DebuggerWindow() {
         setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -71,16 +102,54 @@ public class DebuggerWindow extends JFrame implements UiProcessorListener {
     private void createMenu() {
         mMenuBar = new JMenuBar();
 
-        mFileMenu = new JMenu();
+        mFileMenu = new JMenu();        
         mFileMenu.setText("Arquivo");
+        mOpenFile = new JMenuItem();
+        mOpenFile.setText("Abrir Arquivo");
         mRunMenu = new JMenu();
         mRunMenu.setText("Executar");
-        
+
         mMenuBar.add(mFileMenu);
         mMenuBar.add(mRunMenu);
         setJMenuBar(mMenuBar);
+        mFileMenu.add(mOpenFile);
+
+        mOpenFile.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                // Carrega o arquivo
+                mFile = getFile();
+                if (mFile != null) {
+                    if (mFile != null) {
+                        // Caso ja haja um arquivo rodando, array de source line e limpo
+                        // e entao o novo arquivo e carregado.
+                        Memory.getInstance().cleanSourceCode();
+                        resetUi();
+                    }
+                    FileLoader.load(mFile);
+                    mInstructionsModel.fireTableStructureChanged();
+                }
+            }
+        });
     }
 
+    /**
+     * Pega o arquivo selecionado
+     */
+    private File getFile() {
+        mFileChooser = new JFileChooser();
+        mFileChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+        int result = mFileChooser.showOpenDialog(this);
+
+        // Caso o usuario aperte cancel, o FileChooser e fechado.
+        if (result == JFileChooser.CANCEL_OPTION) {
+            mFileChooser.remove(this);
+            return null;
+        }
+
+        return mFileChooser.getSelectedFile();
+    }
+    
     /**
      * Inicializa e posiciona os componentes na tela
      */
@@ -166,12 +235,15 @@ public class DebuggerWindow extends JFrame implements UiProcessorListener {
         mSouthPanel.validate();
         getContentPane().add(mSouthPanel, BorderLayout.SOUTH);
         
+        final short runMode = mRunMode;
         mRunBtn.addActionListener(new ActionListener() {
-            
             @Override
             public void actionPerformed(ActionEvent e) {
-                // TODO implementar modo um por vez e programa todo
-                while (!Processor.getInstance().proccessNextLine()) {
+                // Executa as instrucoes na thread de background
+                if (runMode == RUN_ALL_AT_ONCE) {
+                    BackgroundOperation.runOnBackgroundThread(sRunAllAtOnce);
+                } else if (runMode == RUN_STEP_BY_STEP) {
+                    BackgroundOperation.runOnBackgroundThread(sRunStepByStep);                    
                 }
             }
         });
@@ -182,22 +254,29 @@ public class DebuggerWindow extends JFrame implements UiProcessorListener {
         mStackTableModel.fireTableStructureChanged();
         mInstructionsModel.fireTableStructureChanged();
         mOutputModel.fireTextAreaStructureChanged();
+        
+        // TODO muda o highlight da tabela para a instrucao atual
     }
 
     @Override
     public void onInputEntered(String inputValue) {
-        mInputTxt.append("Entrada: " + inputValue);
+        mInputTxt.append("Entrada: " + inputValue + "\n");
     }
 
     @Override
     public void onProgramFinished() {
         // TODO seila
+    	
     }
 
     @Override
     public void onRestartProgram() {
+        resetUi();
+    }
+
+    private void resetUi() {          
         mInputTxt.setText("");
         mOutputModel.resetModel();
-        mInstructionsModel.fireTableStructureChanged();
+        mInstructionsModel.fireTableStructureChanged();        
     }
 }

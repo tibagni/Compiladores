@@ -10,21 +10,22 @@ import vm.app.InstructionSet;
 import vm.app.SourceLine;
 
 public class FileLoader {
-    public static void load(File f) {
+    public static void load(File file) {
         // Padrao pra remover espacos em excessoda string
         Pattern pattern = Pattern.compile("\\s{2,}");
+        Scanner reader = null;
 
-        Scanner input = null;
         try {
-            input = new Scanner(f);
+            reader = new Scanner(file);
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            reader = null;
         }
-        if (input != null) {
+
+        if (reader != null) {
             int lineNumber = 0;
-            while (input.hasNextLine()) {
+            while (reader.hasNextLine()) {
                 // Remove os espacos em excesso
-                Matcher m = pattern.matcher(input.nextLine());
+                Matcher m = pattern.matcher(reader.nextLine());
                 String[] line = m.replaceAll(" ").trim().split(" ");
                 SourceLine sourceLine = new SourceLine();
 
@@ -57,7 +58,7 @@ public class FileLoader {
                             // atributo
                             sourceLine.mInstruction = line[0];
                             sourceLine.mAtt1 = line[1];
-    
+
                             // Verifica o segundo atributo
                             if (line.length == 3) {
                                 sourceLine.mAtt2 = line[2];
@@ -71,9 +72,10 @@ public class FileLoader {
                     Memory.getInstance().setLabelInCache(sourceLine.mLabel, sourceLine.mLineNumber);
                 }
             }
+
             // Fecha o arquivo
-            if (input != null) {
-                input.close();
+            if (reader != null) {
+                reader.close();
             }
         }
     }

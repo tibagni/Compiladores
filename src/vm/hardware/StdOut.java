@@ -1,15 +1,15 @@
 package vm.hardware;
 
-public class OutputStream {
-    private static OutputStream sInstance;
+public class StdOut {
+    private static StdOut sInstance;
 
     private StringBuilder mOutput = new StringBuilder("");
 
-    private OutputStream() {}
+    private StdOut() {}
     
-    public static OutputStream getInstance() {
+    public static StdOut getInstance() {
         if (sInstance == null) {
-            sInstance = new OutputStream();
+            sInstance = new StdOut();
         }
         return sInstance;
     }

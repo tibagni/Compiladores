@@ -2,7 +2,7 @@ package vm.app.gui.model;
 
 import javax.swing.JTextArea;
 
-import vm.hardware.OutputStream;
+import vm.hardware.StdOut;
 
 public class OutputTextAreaModel extends AbstractTextAreaModel {
 
@@ -12,11 +12,11 @@ public class OutputTextAreaModel extends AbstractTextAreaModel {
 
     @Override
     protected void onStructureChanged() {
-        mComponent.setText(OutputStream.getInstance().getOutputString());
+        mComponent.setText(StdOut.getInstance().getOutputString());
     }
 
     @Override
     protected void onReset() {
-        OutputStream.getInstance().cleanOutputStream();
+        StdOut.getInstance().cleanOutputStream();
     }
 }

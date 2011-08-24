@@ -14,9 +14,6 @@ public class VirtualMachine {
      * @param args
      */
     public static void main(String[] args) {
-        // Mudar de lugar
-        File f = new File(args[0]);
-        FileLoader.load(f);
         // Cria a janela na thread de eventos EDT
         SwingUtilities.invokeLater(new Runnable() {
             @Override
