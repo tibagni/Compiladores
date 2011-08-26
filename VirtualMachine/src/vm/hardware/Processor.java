@@ -141,17 +141,30 @@ public class Processor {
                 break;
             case InstructionSet.RD:
                 // RD (VALOR ENTRADO PELO USUARIO)
-                // TODO checar consistencia de inteiro
-                final String valor = JOptionPane.showInputDialog("Entre com o Valor.");
-                line.mComment = Memory.getInstance().doRd(Integer.parseInt(valor));
+                boolean inputOk = false;
+                int inputValue = 0;
+                String stringValue;
+
+                while (!inputOk) {
+                    stringValue = JOptionPane.showInputDialog(null, "Qual o valor de entrada?", 
+                            "Valor de entrada:", JOptionPane.QUESTION_MESSAGE);
+                    try {
+                        inputValue = Integer.parseInt(stringValue);
+                        inputOk = true;
+                    } catch (NumberFormatException ex) {
+                        inputOk = false;
+                    }
+                }
+                line.mComment = Memory.getInstance().doRd(inputValue);
                 
+                final String finalInputString = String.format("%d", inputValue);
                 // Atualiza Ui para mostrar entrada
                 if (mListener != null) {
                     // Chama o callback do listener na EDT
                     SwingUtilities.invokeLater(new Runnable() {
                         @Override
                         public void run() {
-                            mListener.onInputEntered(valor);
+                            mListener.onInputEntered(finalInputString);
                         }
                     });
                 }

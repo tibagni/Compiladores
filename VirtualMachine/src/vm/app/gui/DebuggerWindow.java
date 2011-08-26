@@ -267,10 +267,13 @@ public class DebuggerWindow extends JFrame implements UiProcessorListener {
         mRunBtn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                disableRunOptionsMenu();
                 // Executa as instrucoes na thread de background
                 if (mRunMode == RUN_ALL_AT_ONCE) {
+                    mRunBtn.setEnabled(false);
                     BackgroundOperation.runOnBackgroundThread(sRunAllAtOnce);
                 } else if (mRunMode == RUN_STEP_BY_STEP) {
+                    mRunBtn.setText("Próxima instrução");
                     BackgroundOperation.runOnBackgroundThread(sRunStepByStep);                    
                 }
             }
@@ -303,6 +306,12 @@ public class DebuggerWindow extends JFrame implements UiProcessorListener {
 
     @Override
     public void onProgramFinished() {
+        enableRunOptionsMenu();
+        if (mRunMode == RUN_ALL_AT_ONCE) {
+            mRunBtn.setEnabled(true);
+        } else if (mRunMode == RUN_STEP_BY_STEP) {
+            mRunBtn.setText("Rodar");                    
+        }
     }
 
     @Override
@@ -314,5 +323,13 @@ public class DebuggerWindow extends JFrame implements UiProcessorListener {
         mInputTxt.setText("");
         mOutputModel.resetModel();
         mInstructionsModel.fireTableStructureChanged();        
+    }
+
+    private void disableRunOptionsMenu() {
+        mRunMenu.setEnabled(false);
+    }
+
+    private void enableRunOptionsMenu() {
+        mRunMenu.setEnabled(true);        
     }
 }
