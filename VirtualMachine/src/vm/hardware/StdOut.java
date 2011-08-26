@@ -1,7 +1,8 @@
 package vm.hardware;
 
 public class StdOut {
-    private static StdOut sInstance;
+    // Pode ser que senha modificada por mais de uma thread
+    private static volatile StdOut sInstance;
 
     private StringBuilder mOutput = new StringBuilder("");
 
@@ -22,7 +23,7 @@ public class StdOut {
         return mOutput.toString();
     }
 
-    public void cleanOutputStream() {
+    public synchronized void cleanOutputStream() {
         mOutput = null;
         mOutput = new StringBuilder("");
     }

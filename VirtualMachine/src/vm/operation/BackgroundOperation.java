@@ -19,7 +19,7 @@ public class BackgroundOperation {
      * Esta thread mantem uma fila com todas as operacoes em background.
      * As operacoes sao executadas serialmente nesta thread (em paralelo com a thread da UI)
      */
-    public static void startBackgroundOperationThread() {
+    public static synchronized void startBackgroundOperationThread() {
         if (sOperationThread != null && sOperationThread.isAlive()) {
             // Thread ja esta rodando
             return;
