@@ -6,6 +6,7 @@ import java.util.HashMap;
 import vm.app.SourceLine;
 
 public class Memory {
+    //Pode ser que seja acessado por mais de uma thread
     public static volatile Memory sInstance;
     
     // Lista que armazena o programa (codigo fonte)
