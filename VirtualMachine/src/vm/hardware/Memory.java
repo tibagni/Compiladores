@@ -6,7 +6,7 @@ import java.util.HashMap;
 import vm.app.SourceLine;
 
 public class Memory {
-    public static Memory sInstance;
+    public static volatile Memory sInstance;
     
     // Lista que armazena o programa (codigo fonte)
     private ArrayList<SourceLine> mSourceCodeMemory;
@@ -93,7 +93,7 @@ public class Memory {
     }
     
     public synchronized void cleanSourceCode() {
-    	mSourceCodeMemory.removeAll(mSourceCodeMemory);
+    	mSourceCodeMemory.clear();
     }
     
 
