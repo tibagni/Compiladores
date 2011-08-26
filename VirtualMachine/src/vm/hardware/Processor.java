@@ -153,6 +153,8 @@ public class Processor {
                         inputOk = true;
                     } catch (NumberFormatException ex) {
                         inputOk = false;
+                        JOptionPane.showMessageDialog(null, "Insira um valor válido!", 
+                                "Valor de entrada inválido!", JOptionPane.ERROR_MESSAGE);
                     }
                 }
                 line.mComment = Memory.getInstance().doRd(inputValue);
