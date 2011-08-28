@@ -1,16 +1,23 @@
 package vm.hardware;
 
 public class StdOut {
-    // Pode ser que seja modificada por mais de uma thread
-    private static volatile StdOut sInstance;
+    private static StdOut sInstance;
+    
+    private static Object sInstanceLock = new Object();
 
     private StringBuilder mOutput = new StringBuilder("");
 
     private StdOut() {}
     
     public static StdOut getInstance() {
-        if (sInstance == null) {
-            sInstance = new StdOut();
+        // Temos que garantir que todas as threads tenham acesso a mesma
+        // Instancia de stdOut. Nao pode ocorrer timeslice depois da comparacao
+        // Senao corre o risoc de serem criadas duas instancias de stdOut
+        // por duas Threads diferentes
+        synchronized (sInstanceLock) {
+            if (sInstance == null) {
+                sInstance = new StdOut();
+            }
         }
         return sInstance;
     }

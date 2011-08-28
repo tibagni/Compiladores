@@ -6,8 +6,9 @@ import java.util.HashMap;
 import vm.app.SourceLine;
 
 public class Memory {
-    //Pode ser que seja acessado por mais de uma thread
-    public static volatile Memory sInstance;
+    private static Memory sInstance;
+    
+    private static Object sInstanceLock = new Object();
     
     // Lista que armazena o programa (codigo fonte)
     private ArrayList<SourceLine> mSourceCodeMemory;
@@ -39,8 +40,14 @@ public class Memory {
     }
 
     public static Memory getInstance() {
-        if (sInstance == null) {
-            sInstance = new Memory();
+        // Temos que garantir que todas as threads tenham acesso a mesma
+        // Instancia de Memory. Nao pode ocorrer timeslice depois da comparacao
+        // Senao corre o risoc de serem criadas duas instancias de Memory
+        // por duas Threads diferentes
+        synchronized (sInstanceLock) {
+            if (sInstance == null) {
+                sInstance = new Memory();
+            }
         }
         return sInstance;
     }
