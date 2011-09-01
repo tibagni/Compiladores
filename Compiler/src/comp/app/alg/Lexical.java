@@ -30,7 +30,7 @@ public class Lexical {
             while (nextChar != EOF) {
                 Token token = null;
                 // Consome (ignora) comentarios e espacos
-                while (nextChar == '{' || nextChar == ' ' || nextChar == '?') {
+                while (nextChar == '{' || nextChar == ' ' || nextChar == ' ') {
                     if (nextChar == '{') {
                         // O texto a seguir e comentario, vamos ignorar.
                         while (nextChar != '}' && nextChar != EOF) {
@@ -41,7 +41,7 @@ public class Lexical {
                         nextChar = (char)reader.read();
                     }
                     // Ignora todos os espacos em sequencia encontrados
-                    while (nextChar == '?' && nextChar != EOF) {
+                    while (nextChar == ' ' && nextChar != EOF) {
                         nextChar = (char)reader.read();
                     }
                 }
