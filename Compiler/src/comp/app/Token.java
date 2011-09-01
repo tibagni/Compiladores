@@ -36,4 +36,9 @@ public class Token {
     public void setSimbolo(int simbolo) {
         mSimbolo = simbolo;
     }
+    
+    //TODO Apagar depois hahaha
+    public String toString() {
+    	return "Lexema: " + mLexema + "  Simbolo: " + mSimbolo;
+    }
 }

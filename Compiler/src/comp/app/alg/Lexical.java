@@ -30,7 +30,7 @@ public class Lexical {
             while (nextChar != EOF) {
                 Token token = null;
                 // Consome (ignora) comentarios e espacos
-                while (nextChar == '{' || nextChar == ' ') {
+                while (nextChar == '{' || nextChar == ' ' || nextChar == '?') {
                     if (nextChar == '{') {
                         // O texto a seguir e comentario, vamos ignorar.
                         while (nextChar != '}' && nextChar != EOF) {
@@ -41,7 +41,7 @@ public class Lexical {
                         nextChar = (char)reader.read();
                     }
                     // Ignora todos os espacos em sequencia encontrados
-                    while (nextChar == ' ' && nextChar != EOF) {
+                    while (nextChar == '?' && nextChar != EOF) {
                         nextChar = (char)reader.read();
                     }
                 }
@@ -66,11 +66,15 @@ public class Lexical {
                             nextChar = (char)reader.read();                            
                         }
                         token = new Token(id.toString(), Simbolos.SINDEFINIDO);
-                        
                         // Verifica qual e o simbolo deste token
-                        token.setSimbolo(Simbolos.PALAVRAS_RESERVADAS.get(id));
+                        
+                        try {
+                        	token.setSimbolo(Simbolos.PALAVRAS_RESERVADAS.get(id.toString()));
+                        }catch(NullPointerException e){
+                        	token.setSimbolo(Simbolos.SIDENTIFICADOR);
+                        }
                         // TODO verificar se a linha abaixo esta certa
-                        nextChar = (char)reader.read();       
+                        nextChar = (char)reader.read();
                         
                     } else if (nextChar == ':') {
                         StringBuilder builder = new StringBuilder();
@@ -139,15 +143,15 @@ public class Lexical {
                         
                     } else {
                         // Erro
+                    	nextChar = (char)reader.read();
                     }
 
                     // Insere Token na lista
                     if (token != null) {
-                        mTokenList.add(token);
+                        mTokenList.add(token);                        
                     }
                 }
             }
-            
             reader.close();
         }
     }
