@@ -10,13 +10,14 @@ import java.util.ArrayList;
 import comp.app.Simbolos;
 import comp.app.Token;
 
+
 public class Lexical {
     private static final int EOF             = 65535; // FIXME arrumar fim de arquivo
     private static final int CARRIEGE_RETURN = 13;
     private static final int LINE_FEED       = 10;
 
     private int              lineNumber      = 1;
-    private int              colNumber       = 1; // TODO
+    private int              colNumber       = 0;
     
 
     private ArrayList<Token> mTokenList      = new ArrayList<Token>();
@@ -32,83 +33,89 @@ public class Lexical {
         }
 
         if (reader != null) {
-            char nextChar = (char) reader.read();
+        	// Lê o próximo caractere
+        	char nextChar = readNextChar(reader);
             while (nextChar != EOF) {
                 Token token = null;
                 // Consome (ignora) comentarios e espacos
                 while (nextChar == '{' || nextChar == ' '
                         || nextChar == CARRIEGE_RETURN || nextChar == LINE_FEED) {
                     if (nextChar == '{') {
-                        int commentLine = lineNumber;
+                        int commentLine = lineNumber;  // Salva a linha e a coluna onde
+                        int commentCol = colNumber;    // o comentário foi iniciado 
+                        
                         // O texto a seguir e comentario, vamos ignorar.
                         while (nextChar != '}' && nextChar != EOF) {
                             // Consome caractere dentro do comentario (ignora).
-                            nextChar = (char) reader.read();
+                        	nextChar = readNextChar(reader);
                         }
                         if (nextChar != '}') {
                             // Erro (Comentario nao fechado)
-                            System.out.println("Comentario nao finalizado: "
-                                    + commentLine);
+                            System.out.println("Comentario nao finalizado. Linha:  "
+                                    + commentLine + " Coluna: " + commentCol);
                             break;
                         }
 
                         // Le o ultimo caractere do comentario ('}') e ignora
-                        nextChar = (char) reader.read();
+                        nextChar = readNextChar(reader);
 
-                    } else if (nextChar == LINE_FEED) {
-                        lineNumber++;
-                        colNumber = 1; // Reseta contador de colunas na proxima linha
-                        nextChar = (char) reader.read();
+                    } else if (nextChar == LINE_FEED) { // Lê o caractere line_feed e o ignora
+                        lineNumber++;	// Incrementa o contador de linhas
+                        colNumber = 0; // Reseta contador de colunas na proxima linha
+                        nextChar = readNextChar(reader);
                     } else if (nextChar == CARRIEGE_RETURN) {
-                        nextChar = (char) reader.read();
+                        // Lê o caractere carriege_return e o ignora
+                    	nextChar = readNextChar(reader);
                     }
 
                     // Ignora todos os espacos em sequencia encontrados
                     while (nextChar == ' ' && nextChar != EOF) {
-                        nextChar = (char) reader.read();
+                    	nextChar = readNextChar(reader);
                     }
                 }
 
                 if (nextChar != EOF) {
-                    if (isNumber(nextChar)) { // E numero
+                    if (isNumber(nextChar)) { // É numero
                         StringBuilder num = new StringBuilder();
                         num.append(nextChar);
-                        nextChar = (char) reader.read();
-                        while (isNumber(nextChar)) {
+                        nextChar = readNextChar(reader);
+                        while (isNumber(nextChar)) { //Concatena com todos os proximos digitos
                             num.append(nextChar);
-                            nextChar = (char) reader.read();
+                            nextChar = readNextChar(reader);
                         }
+                        // Cria o token com o numero formado
                         token = new Token(num.toString(), Simbolos.SNUMERO);
 
                     } else if (isLetter(nextChar)) { // Identificador e palavra
                                                      // reservada
                         StringBuilder id = new StringBuilder();
                         id.append(nextChar);
-                        nextChar = (char) reader.read();
+                        nextChar = readNextChar(reader);
                         while (isLetter(nextChar) || isNumber(nextChar)
-                                || nextChar == '_') {
+                                || nextChar == '_') { // Concatena com letras, digitos e/ou "_"
                             id.append(nextChar);
-                            nextChar = (char) reader.read();
+                            nextChar = readNextChar(reader);
                         }
+                        // Cria o token primeiramente com simbolo indefinido
                         token = new Token(id.toString(), Simbolos.SINDEFINIDO);
-                        // Verifica qual e o simbolo deste token
-
+                        
+                        // Agora verifica qual e o simbolo deste token
                         try {
                             token.setSimbolo(Simbolos.PALAVRAS_RESERVADAS
                                     .get(id.toString()));
-                        } catch (NullPointerException e) {
-                            token.setSimbolo(Simbolos.SIDENTIFICADOR);
+                        } catch (NullPointerException e) {      // Se esta excessao for gerada, quer dizer
+                            token.setSimbolo(Simbolos.SIDENTIFICADOR); // que o simbolo é um identificador
                         }
 
                     } else if (nextChar == ':') {
                         StringBuilder builder = new StringBuilder();
                         builder.append(nextChar);
-                        nextChar = (char) reader.read();
+                        nextChar = readNextChar(reader);
                         if (nextChar == '=') {
                             builder.append(nextChar);
                             token = new Token(builder.toString(),
                                     Simbolos.SATRIBUICAO);
-                            nextChar = (char) reader.read();
+                            nextChar = readNextChar(reader);
                         } else {
                             token = new Token(builder.toString(),
                                     Simbolos.SDOISPONTOS);
@@ -124,13 +131,13 @@ public class Lexical {
                         } else {
                             token = new Token("" + nextChar, Simbolos.SMULT);
                         }
-                        nextChar = (char) reader.read();
+                        nextChar = readNextChar(reader);
 
                     } else if (isRelational(nextChar)) {
                         StringBuilder builder = new StringBuilder();
                         builder.append(nextChar);
                         char prevChar = nextChar;
-                        nextChar = (char) reader.read();
+                        nextChar = readNextChar(reader);
                         if (prevChar == '=') {
                             token = new Token(builder.toString(), Simbolos.SIG);
                         } else if (prevChar == '>') {
@@ -138,7 +145,7 @@ public class Lexical {
                                 builder.append(nextChar);
                                 token = new Token(builder.toString(),
                                         Simbolos.SMAIORIG);
-                                nextChar = (char) reader.read();
+                                nextChar = readNextChar(reader);
                             } else {
                                 token = new Token(builder.toString(),
                                         Simbolos.SMAIOR);
@@ -148,7 +155,7 @@ public class Lexical {
                                 builder.append(nextChar);
                                 token = new Token(builder.toString(),
                                         Simbolos.SMENORIG);
-                                nextChar = (char) reader.read();
+                                nextChar = readNextChar(reader);
                             } else {
                                 token = new Token(builder.toString(),
                                         Simbolos.SMENOR);
@@ -158,11 +165,11 @@ public class Lexical {
                                 builder.append(nextChar);
                                 token = new Token(builder.toString(),
                                         Simbolos.SDIF);
-                                nextChar = (char) reader.read();
+                                nextChar = readNextChar(reader);
                             } else {
                                 // Erro (simbolo nao existe)
                                 System.out.println("Símbolo inválido. Linha: "
-                                        + lineNumber);
+                                        + lineNumber + " Coluna: " + (colNumber-1));
                                 break;
                             }
                         }
@@ -171,25 +178,22 @@ public class Lexical {
                         // Simplesmente cria o token apropriado
                         // para depois guardar na lista
                         if (nextChar == ';') {
-                            token = new Token("" + nextChar,
-                                    Simbolos.SPONTO_VIRGULA);
+                            token = new Token("" + nextChar, Simbolos.SPONTO_VIRGULA);
                         } else if (nextChar == ',') {
                             token = new Token("" + nextChar, Simbolos.SVIRGULA);
                         } else if (nextChar == '(') {
-                            token = new Token("" + nextChar,
-                                    Simbolos.SABRE_PARENTESES);
+                            token = new Token("" + nextChar, Simbolos.SABRE_PARENTESES);
                         } else if (nextChar == ')') {
-                            token = new Token("" + nextChar,
-                                    Simbolos.SFECHA_PARENTESES);
+                            token = new Token("" + nextChar, Simbolos.SFECHA_PARENTESES);
                         } else {
                             token = new Token("" + nextChar, Simbolos.SPONTO);
                         }
-                        nextChar = (char) reader.read();
+                        nextChar = readNextChar(reader);
 
                     } else {
                         // Erro
                         System.out.println("Caractere inválido. Linha: "
-                                + lineNumber);
+                                + lineNumber + " Coluna: " + colNumber);
                         break;
                     }
 
@@ -198,6 +202,8 @@ public class Lexical {
                 // Insere Token na lista
                 if (token != null) {
                     mTokenList.add(token);
+                    //TODO inserir no log para debugar. Não esquecer de traduzir o 
+                    // simbolo (int) para string
                 }
             }
             reader.close();
@@ -209,13 +215,22 @@ public class Lexical {
         }
     }
 
+    /* Lê o próximo caractere do fonte e 
+     * incrementa a coluna (posicionamento da leitura) */
+    private char readNextChar(BufferedReader n) throws IOException {
+    	colNumber++;
+    	return (char) n.read();
+    }
+    
+    /* Verifica se o caractere é um digito */
     private boolean isNumber(char c) {
         if (c >= '0' && c <= '9') {
             return true;
         }
         return false;
     }
-
+ 
+    /* Verifica se o caractere é uma letra */
     private boolean isLetter(char c) {
         if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')) {
             return true;
@@ -223,6 +238,7 @@ public class Lexical {
         return false;
     }
 
+    /* Verifica se o caractere é um simbolo aritmetico */
     private boolean isArithmetic(char c) {
         if (c == '+' || c == '-' || c == '*') {
             return true;
@@ -230,6 +246,7 @@ public class Lexical {
         return false;
     }
 
+    /* Verifica se o caractere é um simbolo relacional */
     private boolean isRelational(char c) {
         if (c == '>' || c == '<' || c == '=' || c == '!') {
             return true;
@@ -237,6 +254,7 @@ public class Lexical {
         return false;
     }
 
+    /* Verifica se o caractere é um simbolo de pontuação */
     private boolean isPunctuation(char c) {
         if (c == ';' || c == ',' || c == '(' || c == ')' || c == '.') {
             return true;
