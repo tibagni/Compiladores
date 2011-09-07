@@ -38,6 +38,6 @@ public class Token {
     }
     
     public String toString() {
-    	return "Lexema: " + mLexema + "  Simbolo: " + mSimbolo;
+    	return "[" + mLexema + "] => {" + Simbolos.getSymbolDescription(mSimbolo) + "}";
     }
 }

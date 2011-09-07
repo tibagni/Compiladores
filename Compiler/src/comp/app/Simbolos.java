@@ -69,4 +69,49 @@ public class Simbolos {
         PALAVRAS_RESERVADAS.put("ou", SOU);
         PALAVRAS_RESERVADAS.put("nao", SNAO);
     }
+
+    public static String getSymbolDescription(int symbol) {
+        switch(symbol) {
+            case SPROGRAMA: return "sPrograma";
+            case SINICIO: return "sInicio";
+            case SFIM: return "sFim";
+            case SPROCEDIMENTO: return "sProcedimento";
+            case SFUNCAO: return "sFuncao";
+            case SSE: return "sSe";
+            case SENTAO: return "sEntao";
+            case SSENAO: return "sSenao";
+            case SENQUANTO: return "sEnquanto";
+            case SFACA: return "sFaca";
+            case SATRIBUICAO: return "sAtribuicao";
+            case SESCREVA: return "sEscreva";
+            case SLEIA: return "sLeia";
+            case SVAR: return "sVar";
+            case SINTEIRO: return "sInteiro";
+            case SBOOLEANO: return "sBoolaeno";
+            case SIDENTIFICADOR: return "sIdentificador";
+            case SNUMERO: return "sNumero";
+            case SPONTO: return "sPonto";
+            case SPONTO_VIRGULA: return "sPonto_vitgula";
+            case SVIRGULA: return "sVirgula";
+            case SABRE_PARENTESES: return "sAbre_parenteses";
+            case SFECHA_PARENTESES: return "sFecha_parenteses";
+            case SMAIOR: return "sMaior";
+            case SMAIORIG: return "sMaiorig";
+            case SIG: return "sIg";
+            case SMENOR: return "sMenor";
+            case SMENORIG: return "sMenorig";
+            case SDIF: return "sDif";
+            case SMAIS: return "sMais";
+            case SMENOS: return "sMenos";
+            case SMULT: return "sMult";
+            case SDIV: return "sDiv";
+            case SE: return "sE";
+            case SOU: return "sOu";
+            case SNAO: return "sNao";
+            case SDOISPONTOS: return "sDoispontos";
+            case SVERDADEIRO: return "sVerdadeiro";
+            case SFALSO: return "sFalso";
+            default: return "Símbolo indefinido";
+        }
+    }
 }

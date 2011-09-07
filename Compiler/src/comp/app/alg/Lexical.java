@@ -7,6 +7,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import com.app.log.C_Log;
+
 import comp.app.Simbolos;
 import comp.app.Token;
 
@@ -202,27 +204,22 @@ public class Lexical {
                 // Insere Token na lista
                 if (token != null) {
                     mTokenList.add(token);
-                    //TODO inserir no log para debugar. Não esquecer de traduzir o 
-                    // simbolo (int) para string
+                    //Log para debugar.
+                    if(C_Log.ENABLED) C_Log.logToken(token);
                 }
             }
             reader.close();
-
-            // TODO remover for (teste)
-            for (Token t : mTokenList) {
-                System.out.println(t);
-            }
         }
     }
 
-    /* Lê o próximo caractere do fonte e 
+    /** Lê o próximo caractere do fonte e 
      * incrementa a coluna (posicionamento da leitura) */
     private char readNextChar(BufferedReader n) throws IOException {
     	colNumber++;
     	return (char) n.read();
     }
     
-    /* Verifica se o caractere é um digito */
+    /** Verifica se o caractere é um digito */
     private boolean isNumber(char c) {
         if (c >= '0' && c <= '9') {
             return true;
@@ -230,7 +227,7 @@ public class Lexical {
         return false;
     }
  
-    /* Verifica se o caractere é uma letra */
+    /** Verifica se o caractere é uma letra */
     private boolean isLetter(char c) {
         if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')) {
             return true;
@@ -238,7 +235,7 @@ public class Lexical {
         return false;
     }
 
-    /* Verifica se o caractere é um simbolo aritmetico */
+    /** Verifica se o caractere é um simbolo aritmetico */
     private boolean isArithmetic(char c) {
         if (c == '+' || c == '-' || c == '*') {
             return true;
@@ -246,7 +243,7 @@ public class Lexical {
         return false;
     }
 
-    /* Verifica se o caractere é um simbolo relacional */
+    /** Verifica se o caractere é um simbolo relacional */
     private boolean isRelational(char c) {
         if (c == '>' || c == '<' || c == '=' || c == '!') {
             return true;
@@ -254,7 +251,7 @@ public class Lexical {
         return false;
     }
 
-    /* Verifica se o caractere é um simbolo de pontuação */
+    /** Verifica se o caractere é um simbolo de pontuação */
     private boolean isPunctuation(char c) {
         if (c == ';' || c == ',' || c == '(' || c == ')' || c == '.') {
             return true;
