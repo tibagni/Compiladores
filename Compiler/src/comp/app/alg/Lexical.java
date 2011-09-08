@@ -17,6 +17,7 @@ public class Lexical {
     private static final int EOF             = 65535; // FIXME arrumar fim de arquivo
     private static final int CARRIEGE_RETURN = 13;
     private static final int LINE_FEED       = 10;
+    private static final int TAB	         = 9;
 
     private int              lineNumber      = 1;
     private int              colNumber       = 0;
@@ -41,7 +42,7 @@ public class Lexical {
                 Token token = null;
                 // Consome (ignora) comentarios e espacos
                 while (nextChar == '{' || nextChar == ' '
-                        || nextChar == CARRIEGE_RETURN || nextChar == LINE_FEED) {
+                        || nextChar == CARRIEGE_RETURN || nextChar == LINE_FEED || nextChar == TAB) {
                     if (nextChar == '{') {
                         int commentLine = lineNumber;  // Salva a linha e a coluna onde
                         int commentCol = colNumber;    // o comentário foi iniciado 
@@ -65,13 +66,11 @@ public class Lexical {
                         lineNumber++;	// Incrementa o contador de linhas
                         colNumber = 0; // Reseta contador de colunas na proxima linha
                         nextChar = readNextChar(reader);
-                    } else if (nextChar == CARRIEGE_RETURN) {
-                        // Lê o caractere carriege_return e o ignora
-                    	nextChar = readNextChar(reader);
                     }
 
-                    // Ignora todos os espacos em sequencia encontrados
-                    while (nextChar == ' ' && nextChar != EOF) {
+                    // Ignora todos os espacos em sequencia encontrados, assim como TABs e voltas de linhas.
+                    while ((nextChar == ' ' || nextChar == CARRIEGE_RETURN || nextChar == TAB) 
+                    		&& nextChar != EOF) {
                     	nextChar = readNextChar(reader);
                     }
                 }

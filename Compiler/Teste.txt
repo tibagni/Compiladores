@@ -1,3 +1,5 @@
-se contador != 10 { exemplo de comentario} se
-entao escreva  (contador)
-senao escreva (x);
+      		  	    se contador != 10 { exemplo de comentario} se
+				
+		entao escreva  (contador)       
+
+		  	senao escreva (x);
