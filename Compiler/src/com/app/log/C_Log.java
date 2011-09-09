@@ -17,10 +17,15 @@ import comp.app.Token;
  * @author Tiago
  */
 public class C_Log {
-    private static Logger sLogger = Logger.getAnonymousLogger();
+    private static Logger sLogger = Logger.getLogger("C_Log");
     private static FileHandler sTokens;
     
     private static final String TOKEN_LOG = "Tokens.log";
+
+    static {
+    	// Nao mostra o log na saida padrao
+    	sLogger.setUseParentHandlers(false);
+    }
 
     /** Ativa/desativa logs */
     public static final boolean ENABLED = true;
