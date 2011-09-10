@@ -53,7 +53,7 @@ public class CompilerError {
      * @param colNumber
      * @return Instancia do erro
      */
-    public static CompilerError InstantiateError(int errorCode, int lineNumber, int colNumber,
+    public static CompilerError instantiateError(int errorCode, int lineNumber, int colNumber,
             Algorithm context) {
      
         // Protecao para instanciar apenas erros existentes e consistentes
@@ -92,7 +92,7 @@ public class CompilerError {
      */
     public static CompilerError NONE() {
         // Erro NONE nao precisa de contexo (nao sera avaliado)
-        return InstantiateError(NONE_ERROR_CODE, 0, 0, null);
+        return instantiateError(NONE_ERROR_CODE, 0, 0, null);
     }
 
     private static String buildErrorMessage(int errorCode, int lineNumber, int colNumber) {

@@ -34,7 +34,7 @@ public class Lexical extends Algorithm {
             reader = new BufferedReader(new FileReader(file));
         } catch (FileNotFoundException e) {
             e.printStackTrace();
-            return CompilerError.InstantiateError(CompilerError.INVALID_FILE_ERROR, 
+            return CompilerError.instantiateError(CompilerError.INVALID_FILE_ERROR, 
                     0, 0, this);
         }
 
@@ -57,7 +57,7 @@ public class Lexical extends Algorithm {
                         }
                         if (nextChar != '}') {
                             // Erro (Comentario nao fechado)
-                            error = CompilerError.InstantiateError(CompilerError.INVALID_COMMENT_ERROR_CODE, 
+                            error = CompilerError.instantiateError(CompilerError.INVALID_COMMENT_ERROR_CODE, 
                                     commentLine, commentCol, this);
                             break;
                         }
@@ -172,7 +172,7 @@ public class Lexical extends Algorithm {
                                 nextChar = readNextChar(reader);
                             } else {
                                 // Erro (simbolo nao existe)
-                                error = CompilerError.InstantiateError(CompilerError.INVALID_SYMBOL_ERROR_CODE, 
+                                error = CompilerError.instantiateError(CompilerError.INVALID_SYMBOL_ERROR_CODE, 
                                         lineNumber, (colNumber-1), this);
                                 break;
                             }
@@ -196,7 +196,7 @@ public class Lexical extends Algorithm {
 
                     } else {
                         // Erro
-                        error = CompilerError.InstantiateError(CompilerError.INVALID_CHAR_ERROR_CODE, 
+                        error = CompilerError.instantiateError(CompilerError.INVALID_CHAR_ERROR_CODE, 
                                 lineNumber, (colNumber-1), this);
                         break;
                     }

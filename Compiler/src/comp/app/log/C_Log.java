@@ -55,7 +55,10 @@ public class C_Log {
     public static void clearTokensLog() {
         File tokens = new File(TOKEN_LOG);
         if (tokens.exists()) {
-            tokens.delete();
+            boolean deleted = tokens.delete();
+            if (!deleted) {
+                // TODO fazer alguma coisa quando o arquivo nao e removido
+            }
         }        
     }
 
@@ -82,14 +85,11 @@ public class C_Log {
             sb.append(message);
             sb.append(" ");
             if (record.getThrown() != null) {
-                try {
-                    StringWriter sw = new StringWriter();
-                    PrintWriter pw = new PrintWriter(sw);
-                    record.getThrown().printStackTrace(pw);
-                    pw.close();
-                    sb.append(sw.toString());
-                } catch (Exception ex) {
-                }
+                StringWriter sw = new StringWriter();
+                PrintWriter pw = new PrintWriter(sw);
+                record.getThrown().printStackTrace(pw);
+                pw.close();
+                sb.append(sw.toString());
             }
             sb.append(lineSeparator);
             return sb.toString();
