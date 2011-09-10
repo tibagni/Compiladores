@@ -7,17 +7,17 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import com.app.log.C_Log;
-
 import comp.app.Simbolos;
 import comp.app.Token;
+import comp.app.error.CompilerError;
+import comp.app.log.C_Log;
 
 
-public class Lexical {
+public class Lexical extends Algorithm {
     private static final int EOF             = 65535; // FIXME arrumar fim de arquivo
     private static final int CARRIEGE_RETURN = 13;
     private static final int LINE_FEED       = 10;
-    private static final int TAB	         = 9;
+    private static final int TAB	     = 9;
 
     private int              lineNumber      = 1;
     private int              colNumber       = 0;
@@ -25,14 +25,17 @@ public class Lexical {
 
     private ArrayList<Token> mTokenList      = new ArrayList<Token>();
 
-    public void analiseLexica(File file) throws IOException {
+    public CompilerError analiseLexica(File file) throws IOException {
         BufferedReader reader;
+        
+        CompilerError error = CompilerError.NONE();
 
         try {
             reader = new BufferedReader(new FileReader(file));
         } catch (FileNotFoundException e) {
             e.printStackTrace();
-            return;
+            return CompilerError.InstantiateError(CompilerError.INVALID_FILE_ERROR, 
+                    0, 0, this);
         }
 
         if (reader != null) {
@@ -54,8 +57,8 @@ public class Lexical {
                         }
                         if (nextChar != '}') {
                             // Erro (Comentario nao fechado)
-                            System.out.println("Comentario nao finalizado. Linha:  "
-                                    + commentLine + " Coluna: " + commentCol);
+                            error = CompilerError.InstantiateError(CompilerError.INVALID_COMMENT_ERROR_CODE, 
+                                    commentLine, commentCol, this);
                             break;
                         }
 
@@ -169,8 +172,8 @@ public class Lexical {
                                 nextChar = readNextChar(reader);
                             } else {
                                 // Erro (simbolo nao existe)
-                                System.out.println("Símbolo inválido. Linha: "
-                                        + lineNumber + " Coluna: " + (colNumber-1));
+                                error = CompilerError.InstantiateError(CompilerError.INVALID_SYMBOL_ERROR_CODE, 
+                                        lineNumber, (colNumber-1), this);
                                 break;
                             }
                         }
@@ -193,8 +196,8 @@ public class Lexical {
 
                     } else {
                         // Erro
-                        System.out.println("Caractere inválido. Linha: "
-                                + lineNumber + " Coluna: " + colNumber);
+                        error = CompilerError.InstantiateError(CompilerError.INVALID_CHAR_ERROR_CODE, 
+                                lineNumber, (colNumber-1), this);
                         break;
                     }
 
@@ -209,6 +212,7 @@ public class Lexical {
             }
             reader.close();
         }
+        return error;
     }
 
     /** Lê o próximo caractere do fonte e 

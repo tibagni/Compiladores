@@ -1,4 +1,4 @@
-package com.app.log;
+package comp.app.log;
 
 import java.io.File;
 import java.io.IOException;

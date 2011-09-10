@@ -3,9 +3,9 @@ package comp.app;
 import java.io.File;
 import java.io.IOException;
 
-import com.app.log.C_Log;
 
 import comp.app.alg.Lexical;
+import comp.app.log.C_Log;
 
 public class Compilador {
 
