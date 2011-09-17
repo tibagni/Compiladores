@@ -33,14 +33,14 @@ public class Lexical extends Algorithm {
         try {
             reader = new BufferedReader(new FileReader(file));
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            C_Log.error("Arquivo nao encontrado!!", e);
             return CompilerError.instantiateError(CompilerError.INVALID_FILE_ERROR, 
                     0, 0, this);
         }
 
         if (reader != null) {
-        	// Lê o próximo caractere
-        	char nextChar = readNextChar(reader);
+            // Lê o próximo caractere
+            char nextChar = readNextChar(reader);
             while (nextChar != EOF) {
                 Token token = null;
                 // Consome (ignora) comentarios e espacos
