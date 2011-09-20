@@ -3,8 +3,8 @@ package comp.app;
 import java.io.File;
 import java.io.IOException;
 
-
 import comp.app.alg.Lexical;
+import comp.app.error.CompilerError;
 import comp.app.log.C_Log;
 
 public class Compilador {
@@ -21,9 +21,17 @@ public class Compilador {
         
         if (f != null && f.exists()) {
             try {
-                new Lexical().analiseLexica(f);
+                Lexical lexical = new Lexical();
+                CompilerError error = lexical.analiseLexica(f);
+                
+                if (error.getErrorCode() != CompilerError.NONE_ERROR_CODE) {
+                    System.out.println(error.getErrorMessage());
+                } else {
+                    System.out.println("Análise lexical Ok");                    
+                }
+                
             } catch (IOException e) {
-                e.printStackTrace();
+                C_Log.error("Erro no arquivo!", e);
             }
         }
     }

@@ -64,7 +64,8 @@ public class CompilerError {
                     " ou não existe!!!");
         }
 
-        return new CompilerError(errorCode, 0, 0, buildErrorMessage(errorCode, 0, 0));
+        return new CompilerError(errorCode, lineNumber, colNumber, 
+                buildErrorMessage(errorCode, lineNumber, colNumber));
     }
 
     private static boolean checkConsistency(int errorCode, Algorithm context) {
