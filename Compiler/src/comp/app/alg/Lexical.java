@@ -5,7 +5,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
 
 import comp.app.Simbolos;
 import comp.app.Token;
@@ -23,9 +22,9 @@ public class Lexical extends Algorithm {
     private int              colNumber       = 0;
     
 
-    private ArrayList<Token> mTokenList      = new ArrayList<Token>();
+    private Tokens mTokenList      = Tokens.getInstance();
 
-    public CompilerError analiseLexica(File file) throws IOException {
+    public CompilerError execute(File file) throws IOException {
         BufferedReader reader;
         
         CompilerError error = CompilerError.NONE();
@@ -205,13 +204,16 @@ public class Lexical extends Algorithm {
 
                 // Insere Token na lista
                 if (token != null) {
-                    mTokenList.add(token);
+                    mTokenList.insertTokenInBuffer(token);
                     //Log para debugar.
                     if(C_Log.ENABLED) C_Log.logToken(token);
                 }
             }
             reader.close();
         }
+
+        // Indica que o analisador lexico encerrou
+        mTokenList.setLexicalFinished();
         return error;
     }
 

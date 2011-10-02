@@ -22,7 +22,7 @@ public class Compilador {
         if (f != null && f.exists()) {
             try {
                 Lexical lexical = new Lexical();
-                CompilerError error = lexical.analiseLexica(f);
+                CompilerError error = lexical.execute(f);
                 
                 if (error.getErrorCode() != CompilerError.NONE_ERROR_CODE) {
                     System.out.println(error.getErrorMessage());

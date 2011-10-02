@@ -2,6 +2,7 @@ package comp.app.error;
 
 import comp.app.alg.Algorithm;
 import comp.app.alg.Lexical;
+import comp.app.alg.Syntactic;
 
 
 public class CompilerError {
@@ -12,6 +13,15 @@ public class CompilerError {
     public static final int INVALID_CHAR_ERROR_CODE    = 1;
     public static final int INVALID_SYMBOL_ERROR_CODE  = 2;
     public static final int INVALID_COMMENT_ERROR_CODE = 3;
+    
+    // SINTATICO
+    public static final int INVALID_PROGRAM_START      = 4; // Se o programa nao comeca com a palavra 'programa'
+    public static final int INVALID_PROGRAM_NAME       = 5;
+    public static final int ILLEGAL_END_EXPRESSION     = 6;
+    public static final int ILLEGAL_END_PROGRAM        = 7;
+    public static final int ILLEGAL_VAR_DECLARATION    = 8;
+    public static final int DUPLICATED_VAR             = 9;
+    public static final int UNKNOWN_VAR_TYPE           = 10;
     
     // Outros
     public static final int INVALID_FILE_ERROR         = 100;
@@ -84,6 +94,11 @@ public class CompilerError {
             case INVALID_SYMBOL_ERROR_CODE:
                 if (context instanceof Lexical) return true;
                 break;
+           
+            // Erros que podem ocorrer somente na analise sintatica
+            case INVALID_PROGRAM_START:
+                if (context instanceof Syntactic) return true;
+                break;
         }
         return false;
     }
@@ -115,6 +130,9 @@ public class CompilerError {
             case INVALID_COMMENT_ERROR_CODE:
                 return "Comentário inválido (sem fechamento) - linha: " 
                 + lineNumber + " cluna: " + colNumber;
+
+            case INVALID_PROGRAM_START:
+                return "O programa deve iniciar com a palavra 'programa'";
                 
             case UNKNOWN_ERROR_CODE:
                 return "Erro desconhecido - linha: " 
