@@ -1,15 +1,16 @@
 package comp.app.alg;
 
-import comp.app.Simbolos;
+import comp.app.Symbols;
 import comp.app.Token;
 import comp.app.error.CompilerError;
 
 public class Syntactic extends Algorithm {
     private Tokens mTokenList = Tokens.getInstance();
     private Token mCurrentToken;
+    private int mLabel;
 
     public CompilerError execute() {
-        int label = 1;
+        mLabel = 1;
         CompilerError error = CompilerError.NONE();
         
         // TODO verificar se Lexico esta rodando ou se ja falhou
@@ -17,36 +18,37 @@ public class Syntactic extends Algorithm {
         
         // O primeiro token esperado e o 'programa'
         mCurrentToken = mTokenList.getTokenFromBuffer();
-        if (mCurrentToken == null || mCurrentToken.getSimbolo() != Simbolos.SPROGRAMA) {
+        if (mCurrentToken == null || mCurrentToken.getSymbol() != Symbols.SPROGRAMA) {
             return CompilerError.instantiateError(CompilerError.INVALID_PROGRAM_START, 0, 0, this);
         }
         
         // Le proximo token se a inicializacao do codigo esta correta
         mCurrentToken = mTokenList.getTokenFromBuffer();
-        if (mCurrentToken == null || mCurrentToken.getSimbolo() != Simbolos.SIDENTIFICADOR) {
+        if (mCurrentToken == null || mCurrentToken.getSymbol() != Symbols.SIDENTIFICADOR) {
             // Um identificador era esperado aqui
-            return null; // TODO invalidProgramName
+            return CompilerError.instantiateError(CompilerError.INVALID_PROGRAM_NAME, 0, 0, this);
         }
         // Identificador encontrado!
         // TODO inserir na tabela de simbolos
         mCurrentToken = mTokenList.getTokenFromBuffer();
-        if (mCurrentToken == null || mCurrentToken.getSimbolo() != Simbolos.SPONTO_VIRGULA) {
-            return null; // TODO IllegalEndOfExpression
+        if (mCurrentToken == null || mCurrentToken.getSymbol() != Symbols.SPONTO_VIRGULA) {
+            return CompilerError.instantiateError(CompilerError.ILLEGAL_END_EXPRESSION, 
+            		mCurrentToken.getTokenLine(), mCurrentToken.getTokenEndColumn(), this);
         }
         
         error = blockAnalyser();
         if (error.getErrorCode() == CompilerError.NONE_ERROR_CODE) {
             if (mCurrentToken == null
-                    || mCurrentToken.getSimbolo() != Simbolos.SPONTO) {
-                return null; // TODO illegalEndProgram
+                    || mCurrentToken.getSymbol() != Symbols.SPONTO) {
+                return CompilerError.instantiateError(CompilerError.ILLEGAL_END_PROGRAM, 0, 0, this);
             }
 
             if (!mTokenList.isLexicalFinishedWithouError()) {
-                return null; // TODO ErroLexico - UnknownError
+            	// ErroLexico - UnknownError
+            	return CompilerError.instantiateError(CompilerError.UNKNOWN_ERROR_CODE, 0, 0, this);
             }
         }
 
-        // Nao houveram erros, analisador sintatico OK
         return error;
     }
 
@@ -67,21 +69,23 @@ public class Syntactic extends Algorithm {
 
     private CompilerError processVarDeclaration() {
         CompilerError error = CompilerError.NONE();
-        if (mCurrentToken != null && mCurrentToken.getSimbolo() == Simbolos.SVAR) {
+        if (mCurrentToken != null && mCurrentToken.getSymbol() == Symbols.SVAR) {
             mCurrentToken = mTokenList.getTokenFromBuffer();
-            if (mCurrentToken != null && mCurrentToken.getSimbolo() == Simbolos.SIDENTIFICADOR) {
-                while (mCurrentToken.getSimbolo() == Simbolos.SIDENTIFICADOR) {
+            if (mCurrentToken != null && mCurrentToken.getSymbol() == Symbols.SIDENTIFICADOR) {
+                while (mCurrentToken.getSymbol() == Symbols.SIDENTIFICADOR) {
                     error = processVariables();
                     if (error.getErrorCode() == CompilerError.NONE_ERROR_CODE) {
-                        if (mCurrentToken != null && mCurrentToken.getSimbolo() == Simbolos.SPONTO_VIRGULA) {
+                        if (mCurrentToken != null && mCurrentToken.getSymbol() == Symbols.SPONTO_VIRGULA) {
                             mCurrentToken = mTokenList.getTokenFromBuffer();
                         } else {
-                            // TODO erro IllegalEndExpression
+                            error = CompilerError.instantiateError(CompilerError.ILLEGAL_END_EXPRESSION, 
+                            		mCurrentToken.getTokenLine(), mCurrentToken.getTokenEndColumn(), this);
                         }
                     }
                 }
             } else {
-                // TODO erro IllegalVarDeclaration
+                error = CompilerError.instantiateError(CompilerError.ILLEGAL_DECLARATION, 
+                		mCurrentToken.getTokenLine(), mCurrentToken.getTokenEndColumn(), this);
             }
         }
 
@@ -98,25 +102,27 @@ public class Syntactic extends Algorithm {
             
             // TODO inserir variavel na tabela de simbolos
             mCurrentToken = mTokenList.getTokenFromBuffer();
-            if (mCurrentToken != null && (mCurrentToken.getSimbolo() == Simbolos.SVIRGULA ||
-                    mCurrentToken.getSimbolo() == Simbolos.SDOISPONTOS)) {
-                if (mCurrentToken.getSimbolo() == Simbolos.SVIRGULA) {
+            if (mCurrentToken != null && (mCurrentToken.getSymbol() == Symbols.SVIRGULA ||
+                    mCurrentToken.getSymbol() == Symbols.SDOISPONTOS)) {
+                if (mCurrentToken.getSymbol() == Symbols.SVIRGULA) {
                     mCurrentToken = mTokenList.getTokenFromBuffer();
                     if (mCurrentToken != null) {
-                        if (mCurrentToken.getSimbolo() == Simbolos.SDOISPONTOS) {
-                            // TODO error = seila; IllegalEndExpression
+                        if (mCurrentToken.getSymbol() == Symbols.SDOISPONTOS) {
+                            error = CompilerError.instantiateError(CompilerError.ILLEGAL_END_EXPRESSION, 
+                            		mCurrentToken.getTokenLine(), mCurrentToken.getTokenEndColumn(), this);
                         }
                     } else {
-                        // TODO error= seila; erro lexico NULL. Unknown
+                        error = CompilerError.instantiateError(CompilerError.UNKNOWN_ERROR_CODE, 0, 0, this);
                         break;
                     }
                 }
             } else {
-                // TODO error = IllegalVarDeclaration;
+                error = CompilerError.instantiateError(CompilerError.ILLEGAL_DECLARATION, 
+                		mCurrentToken.getTokenLine(), mCurrentToken.getTokenEndColumn(), this);
                 break;
             }
             
-        } while (mCurrentToken.getSimbolo() == Simbolos.SDOISPONTOS);
+        } while (mCurrentToken.getSymbol() == Symbols.SDOISPONTOS);
         if (error.getErrorCode() == CompilerError.NONE_ERROR_CODE) {
             mCurrentToken = mTokenList.getTokenFromBuffer();
             error = typeAnalyser();
@@ -127,9 +133,10 @@ public class Syntactic extends Algorithm {
 
     private CompilerError typeAnalyser() {
         CompilerError error = CompilerError.NONE();
-        if (mCurrentToken == null || mCurrentToken.getSimbolo() != Simbolos.SINTEIRO ||
-                mCurrentToken.getSimbolo() != Simbolos.SBOOLEANO) {
-            // TODO error = UNKNOWN_VAR_TYPE;
+        if (mCurrentToken == null || mCurrentToken.getSymbol() != Symbols.SINTEIRO ||
+                mCurrentToken.getSymbol() != Symbols.SBOOLEANO) {
+            error = CompilerError.instantiateError(CompilerError.UNKNOWN_TYPE, 
+            		mCurrentToken.getTokenLine(), mCurrentToken.getTokenEndColumn(), this);
         } else {
             // TODO coloca tipo na tabela de simbolos
             mCurrentToken = mTokenList.getTokenFromBuffer();
@@ -140,13 +147,382 @@ public class Syntactic extends Algorithm {
 
     private CompilerError processSubRoutine() {
         CompilerError error = CompilerError.NONE();
-        
+        int label = mLabel;
+        // TODO GERA('', JMP rotulo, '');
+        mLabel++;
+
+        while (mCurrentToken.getSymbol() == Symbols.SPROCEDIMENTO ||
+        		mCurrentToken.getSymbol() == Symbols.SFUNCAO) {
+        	if (mCurrentToken.getSymbol() == Symbols.SPROCEDIMENTO) {
+        		error = processPorcDeclaration();
+        	} else {
+        		error = processFuncDeclaration();
+        	}
+
+        	if (mCurrentToken.getSymbol() == Symbols.SPONTO_VIRGULA) {
+        		mCurrentToken = mTokenList.getTokenFromBuffer();
+        	} else {
+        		error = CompilerError.instantiateError(CompilerError.ILLEGAL_END_EXPRESSION, 
+        	            		mCurrentToken.getTokenLine(), mCurrentToken.getTokenEndColumn(), this);
+        	}
+        }
+        // TODO GERA(label, null, '', '')
         return error;
+    }
+
+    private CompilerError processPorcDeclaration() {
+        CompilerError error = CompilerError.NONE();
+
+        mCurrentToken = mTokenList.getTokenFromBuffer();
+        // TODO Nivel = L (marca ou novo galho)
+        
+        if (mCurrentToken.getSymbol() == Symbols.SIDENTIFICADOR) {
+        	// TODO Pesquisa declaracao1 do procedimento na tabela
+        	if (mLabel == 3/* TODO se não encontrou na tabela */) {
+        		 // TODO Insere_tabela(token.lexema,”procedimento”,nível, rótulo)             
+                 // {guarda na TabSimb}
+        		 // TODO Gera(rotulo,NULL,´        ´,´            ´)           
+        		 // {CALL irá buscar este rótulo na TabSimb}              
+        		 mLabel++;
+
+        		 mCurrentToken = mTokenList.getTokenFromBuffer();
+        		 if (mCurrentToken.getSymbol() == Symbols.SPONTO_VIRGULA) {
+        			 error = blockAnalyser();
+        		 } else {
+             		error = CompilerError.instantiateError(CompilerError.ILLEGAL_END_EXPRESSION, 
+    	            		mCurrentToken.getTokenLine(), mCurrentToken.getTokenEndColumn(), this); 
+        		 }
+        	} else {
+            	// TODO error = procedimento ja foi declarado;
+        	}
+        } else {
+     		error = CompilerError.instantiateError(CompilerError.ILLEGAL_DECLARATION, 
+            		mCurrentToken.getTokenLine(), mCurrentToken.getTokenEndColumn(), this); 
+        }
+        // TODO Desempilha ou volta de nivel
+        return error;    	
+    }
+
+    private CompilerError processFuncDeclaration() {
+        CompilerError error = CompilerError.NONE();
+
+        mCurrentToken = mTokenList.getTokenFromBuffer();
+        // TODO Nivel = L (marca ou novo galho)
+
+        if (mCurrentToken.getSymbol() == Symbols.SIDENTIFICADOR) {
+        	// TODO Pesquisa declaracao1 do procedimento na tabela
+        	if (mLabel == 3/* TODO se não encontrou na tabela */) {
+       		 	// TODO Insere_tabela(token.lexema,””,nível, rótulo)
+        		mCurrentToken = mTokenList.getTokenFromBuffer();
+        		if (mCurrentToken.getSymbol() == Symbols.SDOISPONTOS) {
+        			mCurrentToken = mTokenList.getTokenFromBuffer();
+        			if (mCurrentToken.getSymbol() == Symbols.SINTEIRO ||
+        					mCurrentToken.getSymbol() == Symbols.SBOOLEANO) {
+        				if (mCurrentToken.getSymbol() == Symbols.SINTEIRO) { 
+        					// TODO então TABSIMB[pc].tipo:=  
+                                 //“função inteiro
+        				} else {
+       				 		// TODO então TABSIMB[pc].tipo:=  
+                        		//“função booleana
+        				}
+        				mCurrentToken = mTokenList.getTokenFromBuffer();
+        				if (mCurrentToken.getSymbol() == Symbols.SPONTO_VIRGULA) {
+        					error = blockAnalyser();
+        				} else {
+            				error = CompilerError.instantiateError(CompilerError.ILLEGAL_END_EXPRESSION, mCurrentToken.getTokenLine(),
+            						mCurrentToken.getTokenEndColumn(), this); 
+        				}
+        			} else {
+        				error = CompilerError.instantiateError(CompilerError.UNKNOWN_TYPE, mCurrentToken.getTokenLine(),
+        						mCurrentToken.getTokenEndColumn(), this);
+        			}
+        		} else {
+    				error = CompilerError.instantiateError(CompilerError.ILLEGAL_DECLARATION, mCurrentToken.getTokenLine(),
+    						mCurrentToken.getTokenEndColumn(), this);        			
+        		}
+        	} else {
+        		// TODO erro semantico - funcao duplicada, ja foi declarada
+        	}
+        } else {
+     		error = CompilerError.instantiateError(CompilerError.ILLEGAL_DECLARATION, 
+            		mCurrentToken.getTokenLine(), mCurrentToken.getTokenEndColumn(), this); 
+        }
+        // TODO Desempilha ou volta de nive
+        return error;    	
     }
 
     private CompilerError processCommands() {
         CompilerError error = CompilerError.NONE();
 
+        if (mCurrentToken.getSymbol() == Symbols.SINICIO) {
+            mCurrentToken = mTokenList.getTokenFromBuffer();
+            error = processSimpleCommand();
+            while (mCurrentToken.getSymbol() != Symbols.SFIM) {
+            	if (mCurrentToken.getSymbol() == Symbols.SPONTO_VIRGULA) {
+            		mCurrentToken = mTokenList.getTokenFromBuffer();
+            		if (mCurrentToken.getSymbol() != Symbols.SFIM) {
+            			error = processSimpleCommand();
+            		}
+            	} else {
+             		error = CompilerError.instantiateError(CompilerError.ILLEGAL_END_EXPRESSION, 
+                    		mCurrentToken.getTokenLine(), mCurrentToken.getTokenEndColumn(), this); 
+            	}
+            }
+            mCurrentToken = mTokenList.getTokenFromBuffer();
+        } else {
+     		error = CompilerError.instantiateError(CompilerError.ILLEGAL_DECLARATION, 
+            		mCurrentToken.getTokenLine(), mCurrentToken.getTokenEndColumn(), this); 
+        }
+
+        return error;
+    }
+
+    private CompilerError processSimpleCommand() {
+        CompilerError error = CompilerError.NONE();
+        
+        switch(mCurrentToken.getSymbol()) {
+        	case Symbols.SIDENTIFICADOR:
+        	    mCurrentToken = mTokenList.getTokenFromBuffer();
+        	    if (mCurrentToken.getSymbol() == Symbols.SATRIBUICAO) {
+        	        error = processAttr();
+        	    } else {
+        	        error = processProcCall();
+        	    }
+        	    break;
+        	case Symbols.SSE:
+        	    error = processIf();
+        	    break;
+        	case Symbols.SENQUANTO:
+        	    error = processWhile();
+        	    break;
+        	case Symbols.SLEIA:
+        	    error = doRead();
+        	    break;
+        	case Symbols.SESCREVA:
+        	    error = doWrite();
+        	    break;
+        	default:
+        	    error = processCommands();
+        }
+    	
+        return error;
+    }
+
+    private CompilerError processAttr() {
+        CompilerError error = CompilerError.NONE();
+        mCurrentToken = mTokenList.getTokenFromBuffer();
+        error = expressionAnalyser();
+        
+        return error;
+    }
+
+    private CompilerError processProcCall() {
+        CompilerError error = CompilerError.NONE();
+        
+        if (mCurrentToken.getSymbol() != Symbols.SIDENTIFICADOR) {
+            // TODO erro - nome de procedimento/funcao invalido
+        }
+        
+        return error;
+    }
+
+    private CompilerError processFuncCall() {
+        CompilerError error = CompilerError.NONE();
+        
+        if (mCurrentToken.getSymbol() != Symbols.SIDENTIFICADOR) {
+            // TODO erro - nome de procedimento/funcao invalido
+        }
+        
+        return error;
+    }
+
+    private CompilerError processIf() {
+        CompilerError error = CompilerError.NONE();
+
+        mCurrentToken = mTokenList.getTokenFromBuffer();
+        error = expressionAnalyser();
+        // Nao continua se a analise da expressao ja falhou!
+        if (error.getErrorCode() != CompilerError.NONE_ERROR_CODE) return error;
+
+        if (mCurrentToken.getSymbol() == Symbols.SENTAO) {
+            mCurrentToken = mTokenList.getTokenFromBuffer();
+            error = processSimpleCommand();
+            if (error.getErrorCode() != CompilerError.NONE_ERROR_CODE && 
+                    mCurrentToken.getSymbol() == Symbols.SSENAO) {
+                mCurrentToken = mTokenList.getTokenFromBuffer();
+                error = processSimpleCommand();
+            }
+        } else {
+            // TODO error
+        }
+
+        return error;
+    }
+    
+    private CompilerError expressionAnalyser() {
+        CompilerError error = CompilerError.NONE();
+        
+         error = simpleExpressionAnalyser();
+        if(error.getErrorCode() == CompilerError.NONE_ERROR_CODE && (mCurrentToken.getSymbol() == Symbols.SMAIOR || mCurrentToken.getSymbol() == Symbols.SMAIORIG
+                || mCurrentToken.getSymbol() == Symbols.SIG || mCurrentToken.getSymbol() == Symbols.SMENOR
+                || mCurrentToken.getSymbol() == Symbols.SMENORIG || mCurrentToken.getSymbol() == Symbols.SDIF)) {
+            mCurrentToken = mTokenList.getTokenFromBuffer();
+            error = simpleExpressionAnalyser();
+        }
+        return error;
+    }
+    
+    private CompilerError simpleExpressionAnalyser() {
+        CompilerError error = CompilerError.NONE();
+        
+        if(mCurrentToken.getSymbol() == Symbols.SMAIS || mCurrentToken.getSymbol() == Symbols.SMENOS) {
+            mCurrentToken = mTokenList.getTokenFromBuffer();
+            error = termAnalyser();
+            if(error.getErrorCode() != CompilerError.NONE_ERROR_CODE) return error;
+            
+            while(mCurrentToken.getSymbol() == Symbols.SMAIS || mCurrentToken.getSymbol() == Symbols.SMENOS || 
+                    mCurrentToken.getSymbol() == Symbols.SOU) {
+                mCurrentToken = mTokenList.getTokenFromBuffer();
+                error = termAnalyser();
+                if(error.getErrorCode() != CompilerError.NONE_ERROR_CODE) break;
+            }
+        }
+        return error;
+    }
+
+    private CompilerError termAnalyser() {
+        CompilerError error = CompilerError.NONE();
+        
+        error = factorAnalyser();
+        if(error.getErrorCode() != CompilerError.NONE_ERROR_CODE) return error;
+        
+        while (mCurrentToken.getSymbol() == Symbols.SMULT || mCurrentToken.getSymbol() == Symbols.SDIV 
+                || mCurrentToken.getSymbol() == Symbols.SE) {
+            mCurrentToken = mTokenList.getTokenFromBuffer();
+        }
+        return error;
+    }
+    
+    private CompilerError factorAnalyser() {
+        CompilerError error = CompilerError.NONE();
+        
+        if(mCurrentToken.getSymbol() == Symbols.SIDENTIFICADOR) {
+            if(mLabel == 1) {// TODO pesquisa_tabela(token.lexema,nível,ind 
+                if(mLabel == 1/* TODO TabSimb[ind].tipo = “função inteiro”) ou  
+                        (TabSimb[ind].tipo = “função booleano”*/) {
+                    error = processFuncCall();
+                    if(error.getErrorCode() != CompilerError.NONE_ERROR_CODE) return error;
+                } else { 
+                    mCurrentToken = mTokenList.getTokenFromBuffer();
+                }
+            } else {
+                //TODO erro semantico
+            }
+        } else if(mCurrentToken.getSymbol() == Symbols.SNUMERO) {
+            mCurrentToken = mTokenList.getTokenFromBuffer();
+        } else if(mCurrentToken.getSymbol() == Symbols.SNAO) {
+            mCurrentToken = mTokenList.getTokenFromBuffer();
+            error = factorAnalyser();
+        } else if(mCurrentToken.getSymbol() == Symbols.SABRE_PARENTESES) {
+            mCurrentToken = mTokenList.getTokenFromBuffer();
+            error = expressionAnalyser();
+            // Se falhou, nao continua
+            if(error.getErrorCode() != CompilerError.NONE_ERROR_CODE) return error;
+
+            if(mCurrentToken.getSymbol() == Symbols.SFECHA_PARENTESES) {
+                mCurrentToken = mTokenList.getTokenFromBuffer();
+            } else {
+                error = CompilerError.instantiateError(CompilerError.ILLEGAL_END_EXPRESSION, 
+                        mCurrentToken.getTokenLine(), mCurrentToken.getTokenEndColumn(), this);
+            }
+        } else {
+            // TODO erro?!?
+        }
+
+        return error;
+    }
+    
+    private CompilerError processWhile() {
+        CompilerError error = CompilerError.NONE();
+        int label, label2;
+        label = mLabel;
+        // Gera(rotulo,NULL,´             ´,´               ´)      {início do while}
+        mLabel++;
+
+        mCurrentToken = mTokenList.getTokenFromBuffer();
+        error = expressionAnalyser();
+        // Nao continua se a analise da expressao ja falhou!
+        if (error.getErrorCode() != CompilerError.NONE_ERROR_CODE) return error;
+
+        if (mCurrentToken.getSymbol() == Symbols.SFACA) {
+            label2 = mLabel;
+            //Gera(´                ´,JMPF,rotulo,´               ´)          {salta se falso} 
+            mLabel++;
+
+            mCurrentToken = mTokenList.getTokenFromBuffer();
+            error = processSimpleCommand();
+            // Gera(´           ´,JMP,auxrot1,´               ´)   {retorna início loop} 
+            // Gera(auxrot2,NULL,´             ´,´               ´)   {fim do while}
+        } else {
+            // TODO erro de while.
+        }
+        
+        return error;
+    }
+
+    private CompilerError doRead() {
+        CompilerError error = CompilerError.NONE();
+        mCurrentToken = mTokenList.getTokenFromBuffer();
+        
+        if (mCurrentToken.getSymbol() == Symbols.SABRE_PARENTESES) {
+            mCurrentToken = mTokenList.getTokenFromBuffer();
+            if (mCurrentToken.getSymbol() == Symbols.SIDENTIFICADOR) {
+                if (mLabel == 3 /* TODO se variavel esta na tabela (token.lexema)*/) {
+                    mCurrentToken = mTokenList.getTokenFromBuffer();
+                    if (mCurrentToken.getSymbol() == Symbols.SFECHA_PARENTESES) {
+                        mCurrentToken = mTokenList.getTokenFromBuffer();
+                    } else {
+                        error = CompilerError.instantiateError(CompilerError.ILLEGAL_END_EXPRESSION,
+                                mCurrentToken.getTokenLine(), mCurrentToken.getTokenEndColumn(), this);
+                    }
+                } else {
+                    // TODO erro semantico
+                }
+            } else {
+                // Erro - nao e identificador
+            }
+        } else {
+            // TODO erro leia!
+        }
+        
+        return error;
+    }
+
+    private CompilerError doWrite() {
+        CompilerError error = CompilerError.NONE();
+        mCurrentToken = mTokenList.getTokenFromBuffer();
+        
+        if (mCurrentToken.getSymbol() == Symbols.SABRE_PARENTESES) {
+            mCurrentToken = mTokenList.getTokenFromBuffer();
+            if (mCurrentToken.getSymbol() == Symbols.SIDENTIFICADOR) {
+                if (mLabel == 3 /* TODO se variavel ou funcao esta na tabela (token.lexema)*/) {
+                    mCurrentToken = mTokenList.getTokenFromBuffer();
+                    if (mCurrentToken.getSymbol() == Symbols.SFECHA_PARENTESES) {
+                        mCurrentToken = mTokenList.getTokenFromBuffer();
+                    } else {
+                        error = CompilerError.instantiateError(CompilerError.ILLEGAL_END_EXPRESSION,
+                                mCurrentToken.getTokenLine(), mCurrentToken.getTokenEndColumn(), this);
+                    }
+                } else {
+                    // TODO erro semantico
+                }
+            } else {
+                // TODO erro, nao e identificador
+            }
+        } else {
+            // TODO erro escreva
+        }
+        
         return error;
     }
 }

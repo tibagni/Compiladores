@@ -2,7 +2,7 @@ package comp.app;
 
 import java.util.HashMap;
 
-public class Simbolos {
+public class Symbols {
     public static final int SINDEFINIDO       = -1;
     public static final int SPROGRAMA         = 0;
     public static final int SINICIO           = 1;
@@ -44,30 +44,30 @@ public class Simbolos {
     public static final int SVERDADEIRO       = 37;
     public static final int SFALSO            = 38;
 
-    public static final HashMap<String, Integer> PALAVRAS_RESERVADAS = new HashMap<String, Integer>();
+    public static final HashMap<String, Integer> KEY_WORD = new HashMap<String, Integer>();
 
     static {
-        PALAVRAS_RESERVADAS.put("programa", SPROGRAMA);
-        PALAVRAS_RESERVADAS.put("se", SSE);
-        PALAVRAS_RESERVADAS.put("entao", SENTAO);
-        PALAVRAS_RESERVADAS.put("senao", SSENAO);
-        PALAVRAS_RESERVADAS.put("enquanto", SENQUANTO);
-        PALAVRAS_RESERVADAS.put("faca", SFACA);
-        PALAVRAS_RESERVADAS.put("inicio", SINICIO);
-        PALAVRAS_RESERVADAS.put("fim", SFIM);
-        PALAVRAS_RESERVADAS.put("escreva", SESCREVA);
-        PALAVRAS_RESERVADAS.put("leia", SLEIA);
-        PALAVRAS_RESERVADAS.put("var", SVAR);
-        PALAVRAS_RESERVADAS.put("inteiro", SINTEIRO);
-        PALAVRAS_RESERVADAS.put("booleano", SBOOLEANO);
-        PALAVRAS_RESERVADAS.put("verdadeiro", SVERDADEIRO);
-        PALAVRAS_RESERVADAS.put("falso", SFALSO);
-        PALAVRAS_RESERVADAS.put("procedimento", SPROCEDIMENTO);
-        PALAVRAS_RESERVADAS.put("funcao", SFUNCAO);
-        PALAVRAS_RESERVADAS.put("div", SDIV);
-        PALAVRAS_RESERVADAS.put("e", SE);
-        PALAVRAS_RESERVADAS.put("ou", SOU);
-        PALAVRAS_RESERVADAS.put("nao", SNAO);
+        KEY_WORD.put("programa", SPROGRAMA);
+        KEY_WORD.put("se", SSE);
+        KEY_WORD.put("entao", SENTAO);
+        KEY_WORD.put("senao", SSENAO);
+        KEY_WORD.put("enquanto", SENQUANTO);
+        KEY_WORD.put("faca", SFACA);
+        KEY_WORD.put("inicio", SINICIO);
+        KEY_WORD.put("fim", SFIM);
+        KEY_WORD.put("escreva", SESCREVA);
+        KEY_WORD.put("leia", SLEIA);
+        KEY_WORD.put("var", SVAR);
+        KEY_WORD.put("inteiro", SINTEIRO);
+        KEY_WORD.put("booleano", SBOOLEANO);
+        KEY_WORD.put("verdadeiro", SVERDADEIRO);
+        KEY_WORD.put("falso", SFALSO);
+        KEY_WORD.put("procedimento", SPROCEDIMENTO);
+        KEY_WORD.put("funcao", SFUNCAO);
+        KEY_WORD.put("div", SDIV);
+        KEY_WORD.put("e", SE);
+        KEY_WORD.put("ou", SOU);
+        KEY_WORD.put("nao", SNAO);
     }
 
     public static String getSymbolDescription(int symbol) {

@@ -6,7 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 
-import comp.app.Simbolos;
+import comp.app.Symbols;
 import comp.app.Token;
 import comp.app.error.CompilerError;
 import comp.app.log.C_Log;
@@ -87,7 +87,7 @@ public class Lexical extends Algorithm {
                             nextChar = readNextChar(reader);
                         }
                         // Cria o token com o numero formado
-                        token = new Token(num.toString(), Simbolos.SNUMERO);
+                        token = new Token(num.toString(), Symbols.SNUMERO, lineNumber, colNumber);
 
                     } else if (isLetter(nextChar)) { // Identificador e palavra
                                                      // reservada
@@ -100,14 +100,14 @@ public class Lexical extends Algorithm {
                             nextChar = readNextChar(reader);
                         }
                         // Cria o token primeiramente com simbolo indefinido
-                        token = new Token(id.toString(), Simbolos.SINDEFINIDO);
+                        token = new Token(id.toString(), Symbols.SINDEFINIDO, lineNumber, colNumber);
                         
                         // Agora verifica qual e o simbolo deste token
                         try {
-                            token.setSimbolo(Simbolos.PALAVRAS_RESERVADAS
+                            token.setSimbolo(Symbols.KEY_WORD
                                     .get(id.toString()));
                         } catch (NullPointerException e) {      // Se esta excessao for gerada, quer dizer
-                            token.setSimbolo(Simbolos.SIDENTIFICADOR); // que o simbolo é um identificador
+                            token.setSimbolo(Symbols.SIDENTIFICADOR); // que o simbolo é um identificador
                         }
 
                     } else if (nextChar == ':') {
@@ -117,22 +117,22 @@ public class Lexical extends Algorithm {
                         if (nextChar == '=') {
                             builder.append(nextChar);
                             token = new Token(builder.toString(),
-                                    Simbolos.SATRIBUICAO);
+                                    Symbols.SATRIBUICAO, lineNumber, colNumber);
                             nextChar = readNextChar(reader);
                         } else {
                             token = new Token(builder.toString(),
-                                    Simbolos.SDOISPONTOS);
+                                    Symbols.SDOISPONTOS, lineNumber, colNumber);
                         }
 
                     } else if (isArithmetic(nextChar)) {
                         // Simplesmente cria o token apropriado
                         // para depois guardar na lista
                         if (nextChar == '+') {
-                            token = new Token("" + nextChar, Simbolos.SMAIS);
+                            token = new Token("" + nextChar, Symbols.SMAIS, lineNumber, colNumber);
                         } else if (nextChar == '-') {
-                            token = new Token("" + nextChar, Simbolos.SMENOS);
+                            token = new Token("" + nextChar, Symbols.SMENOS, lineNumber, colNumber);
                         } else {
-                            token = new Token("" + nextChar, Simbolos.SMULT);
+                            token = new Token("" + nextChar, Symbols.SMULT, lineNumber, colNumber);
                         }
                         nextChar = readNextChar(reader);
 
@@ -142,32 +142,32 @@ public class Lexical extends Algorithm {
                         char prevChar = nextChar;
                         nextChar = readNextChar(reader);
                         if (prevChar == '=') {
-                            token = new Token(builder.toString(), Simbolos.SIG);
+                            token = new Token(builder.toString(), Symbols.SIG, lineNumber, colNumber);
                         } else if (prevChar == '>') {
                             if (nextChar == '=') {
                                 builder.append(nextChar);
                                 token = new Token(builder.toString(),
-                                        Simbolos.SMAIORIG);
+                                        Symbols.SMAIORIG, lineNumber, colNumber);
                                 nextChar = readNextChar(reader);
                             } else {
                                 token = new Token(builder.toString(),
-                                        Simbolos.SMAIOR);
+                                        Symbols.SMAIOR, lineNumber, colNumber);
                             }
                         } else if (prevChar == '<') {
                             if (nextChar == '=') {
                                 builder.append(nextChar);
                                 token = new Token(builder.toString(),
-                                        Simbolos.SMENORIG);
+                                        Symbols.SMENORIG, lineNumber, colNumber);
                                 nextChar = readNextChar(reader);
                             } else {
                                 token = new Token(builder.toString(),
-                                        Simbolos.SMENOR);
+                                        Symbols.SMENOR, lineNumber, colNumber);
                             }
                         } else { // prevChar = '!'
                             if (nextChar == '=') {
                                 builder.append(nextChar);
                                 token = new Token(builder.toString(),
-                                        Simbolos.SDIF);
+                                        Symbols.SDIF, lineNumber, colNumber);
                                 nextChar = readNextChar(reader);
                             } else {
                                 // Erro (simbolo nao existe)
@@ -181,15 +181,15 @@ public class Lexical extends Algorithm {
                         // Simplesmente cria o token apropriado
                         // para depois guardar na lista
                         if (nextChar == ';') {
-                            token = new Token("" + nextChar, Simbolos.SPONTO_VIRGULA);
+                            token = new Token("" + nextChar, Symbols.SPONTO_VIRGULA, lineNumber, colNumber);
                         } else if (nextChar == ',') {
-                            token = new Token("" + nextChar, Simbolos.SVIRGULA);
+                            token = new Token("" + nextChar, Symbols.SVIRGULA, lineNumber, colNumber);
                         } else if (nextChar == '(') {
-                            token = new Token("" + nextChar, Simbolos.SABRE_PARENTESES);
+                            token = new Token("" + nextChar, Symbols.SABRE_PARENTESES, lineNumber, colNumber);
                         } else if (nextChar == ')') {
-                            token = new Token("" + nextChar, Simbolos.SFECHA_PARENTESES);
+                            token = new Token("" + nextChar, Symbols.SFECHA_PARENTESES, lineNumber, colNumber);
                         } else {
-                            token = new Token("" + nextChar, Simbolos.SPONTO);
+                            token = new Token("" + nextChar, Symbols.SPONTO, lineNumber, colNumber);
                         }
                         nextChar = readNextChar(reader);
 

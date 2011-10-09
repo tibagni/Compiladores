@@ -19,9 +19,11 @@ public class CompilerError {
     public static final int INVALID_PROGRAM_NAME       = 5;
     public static final int ILLEGAL_END_EXPRESSION     = 6;
     public static final int ILLEGAL_END_PROGRAM        = 7;
-    public static final int ILLEGAL_VAR_DECLARATION    = 8;
-    public static final int DUPLICATED_VAR             = 9;
-    public static final int UNKNOWN_VAR_TYPE           = 10;
+    public static final int ILLEGAL_DECLARATION    	   = 8;
+    public static final int UNKNOWN_TYPE               = 9;
+
+    // SEMANTICO
+    public static final int DUPLICATED_VAR             = 10;
     
     // Outros
     public static final int INVALID_FILE_ERROR         = 100;
@@ -97,6 +99,11 @@ public class CompilerError {
            
             // Erros que podem ocorrer somente na analise sintatica
             case INVALID_PROGRAM_START:
+            case INVALID_PROGRAM_NAME:
+            case ILLEGAL_END_EXPRESSION:
+            case ILLEGAL_END_PROGRAM:
+            case ILLEGAL_DECLARATION:
+            case UNKNOWN_TYPE:
                 if (context instanceof Syntactic) return true;
                 break;
         }
@@ -121,18 +128,36 @@ public class CompilerError {
                 
             case INVALID_CHAR_ERROR_CODE:
                 return "Caracter inválido - linha: " 
-                + lineNumber + " cluna: " + colNumber;
+                + lineNumber + " coluna: " + colNumber;
                 
             case INVALID_SYMBOL_ERROR_CODE:
                 return "Símbolo não existe - linha: " 
-                + lineNumber + " cluna: " + colNumber;
+                + lineNumber + " coluna: " + colNumber;
                 
             case INVALID_COMMENT_ERROR_CODE:
                 return "Comentário inválido (sem fechamento) - linha: " 
-                + lineNumber + " cluna: " + colNumber;
+                + lineNumber + " coluna: " + colNumber;
 
             case INVALID_PROGRAM_START:
                 return "O programa deve iniciar com a palavra 'programa'";
+
+            case INVALID_PROGRAM_NAME:
+                return "O nome do programa é inválido!";
+
+            case ILLEGAL_END_EXPRESSION:
+                return "Expressão finalizada incorretamente - linha: " +
+                    lineNumber + " coluna: " + colNumber;
+
+            case ILLEGAL_END_PROGRAM:
+            	return "Programa finalizado incorretamente (Faltando '.')";
+
+            case ILLEGAL_DECLARATION:
+            	return "Declaraçao incorreta - linha: " +
+            		lineNumber + " coluna: " + colNumber;
+
+            case UNKNOWN_TYPE:
+            	return "Tipo de dados desconhecido - linha: " +
+        		lineNumber + " coluna: " + colNumber;
                 
             case UNKNOWN_ERROR_CODE:
                 return "Erro desconhecido - linha: " 
