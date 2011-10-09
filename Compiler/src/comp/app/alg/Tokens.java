@@ -18,7 +18,7 @@ public class Tokens {
     }
 
     private Tokens() {
-        mTokenBuffer = new ArrayBlockingQueue<Token>(50);
+        mTokenBuffer = new ArrayBlockingQueue<Token>(80);
         mIsLexicalFinished = false;
     }
 
@@ -53,8 +53,8 @@ public class Tokens {
     }
 
     public synchronized void setLexicalFinished() {
-        if (!checkClassConsistency(Lexical.class)) {
-            throw new IllegalArgumentException("Somente o analisador lexical pode" +
+        if (!checkClassPermission(Lexical.class)) {
+            throw new RuntimeException("Somente o analisador lexical pode" +
             		" marcar como finalizado");
         }
         mIsLexicalFinished = true;
@@ -64,10 +64,10 @@ public class Tokens {
         return mIsLexicalFinished && (mTokenBuffer.remainingCapacity() == 0);
     }
 
-    private boolean checkClassConsistency(Class<?> expectedContext) {
+    private boolean checkClassPermission(Class<?> expectedClass) {
         StackTraceElement[] st = Thread.getAllStackTraces().get(Thread.currentThread());
         StackTraceElement element = st[4];
-        if (element.getClassName().equals(expectedContext.getName())) {
+        if (element.getClassName().equals(expectedClass.getName())) {
             return true;
         }
         return false;
