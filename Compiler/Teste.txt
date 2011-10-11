@@ -1,4 +1,4 @@
-{Teste 1 - OK
+{Teste de ponto e virgula excedente}
 programa test1;
 
 var a,b,c: inteiro;
@@ -10,10 +10,10 @@ var a, x: inteiro;
 inicio
   se x>1  entao
       x:= 0;
-  leia(z);
+      leia(z)
   enquanto (a <> 89) e (a<= 1000)  {condicao de parada}
   faca inicio
            a:= x+z
        fim;
   escreva(a)
-fim;
+fim .

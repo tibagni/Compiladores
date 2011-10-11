@@ -8,6 +8,7 @@ import comp.app.alg.Syntactic;
 public class CompilerError {
     public static final int NONE_ERROR_CODE            = 0;
     public static final int UNKNOWN_ERROR_CODE         = -1;
+    public static final int NOT_INITIALIZED            = -2;
 
     // LEXICAL
     public static final int INVALID_CHAR_ERROR_CODE    = 1;
@@ -87,6 +88,7 @@ public class CompilerError {
             case NONE_ERROR_CODE:
             case UNKNOWN_ERROR_CODE:
             case INVALID_FILE_ERROR:
+            case NOT_INITIALIZED:
                 return true;
                 
             // Erros que podem ocorrer somente no algoritmo
@@ -163,6 +165,6 @@ public class CompilerError {
                 return "Erro desconhecido - linha: " 
                 + lineNumber + " cluna: " + colNumber;
         }
-        return null;
+        return "";
     }
 }

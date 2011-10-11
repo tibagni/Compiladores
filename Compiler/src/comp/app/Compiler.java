@@ -4,14 +4,18 @@ import java.io.File;
 import java.io.IOException;
 
 import comp.app.alg.Lexical;
+import comp.app.alg.Syntactic;
 import comp.app.error.CompilerError;
 import comp.app.log.C_Log;
 
 public class Compiler {
     private File mSourceFile;
     
-    private Object lex;
-    private CompilerError mLexicalOutput = null;
+    private Object lex = new Object();
+    private CompilerError mLexicalOutput = CompilerError.instantiateError(CompilerError.NOT_INITIALIZED, 0, 0, null);;
+
+    private Object compilation = new Object();
+    private CompilerError mOutput = CompilerError.instantiateError(CompilerError.NOT_INITIALIZED, 0, 0, null);
 
     /**
      * @param args
@@ -34,13 +38,17 @@ public class Compiler {
 
     public void compile() {
         // TODO inicia as threds para a compilação
+        new Thread(new LexicalThread(mSourceFile)).start();
+        new Thread(new CompilingThread()).start();
         
         // Agora a thread principal espera a compilacao
-        while (mLexicalOutput == null) {
-            try {
-                lex.wait();
-            } catch (InterruptedException e) {
-                C_Log.error("InterruptedException", e);
+        synchronized (lex) {
+            while (mLexicalOutput.getErrorCode() == CompilerError.NOT_INITIALIZED) {
+                try {
+                    lex.wait();
+                } catch (InterruptedException e) {
+                    C_Log.error("InterruptedException", e);
+                }
             }
         }
         
@@ -51,10 +59,27 @@ public class Compiler {
          */
         if (getLexicalOutput().getErrorCode() != CompilerError.NONE_ERROR_CODE) {
             // TODO informa erro ao usuario e a outra thread para que sua execucao seja cnacelada
+            System.out.println(getLexicalOutput().getErrorMessage());
         } else {
             // Espera a segunda thread terminar para verificar o status da compilacao
-            // TODO wait...
+            synchronized (compilation) {
+                while (mOutput.getErrorCode() == CompilerError.NOT_INITIALIZED) {
+                    try {
+                        compilation.wait();
+                    } catch (InterruptedException e) {
+                        C_Log.error("InterruptedException", e);
+                    }
+                }
+            }
             
+            // Checa erros do restante da compilacao (Sintatico e semantico)
+            if (getOutput().getErrorCode() != CompilerError.NONE_ERROR_CODE) {
+                // TODO informa erro
+                System.out.println(getOutput().getErrorMessage());
+            } else {
+                // TODO compilacao concluida com sucesso
+                System.out.println("Sucesso!!");
+            }   
         }
     }
 
@@ -67,6 +92,18 @@ public class Compiler {
     private CompilerError getLexicalOutput() {
         synchronized(mLexicalOutput) {
             return mLexicalOutput;
+        }
+    }
+
+    private void setOutput(CompilerError error) {
+        synchronized(mOutput) {
+            mOutput = error;
+        }
+    }
+
+    private CompilerError getOutput() {
+        synchronized(mOutput) {
+            return mOutput;
         }
     }
 
@@ -95,14 +132,25 @@ public class Compiler {
                 setLexicalOutput(CompilerError.instantiateError(CompilerError.INVALID_FILE_ERROR, 0, 0, null));
             } finally {
                 // Apenas a main Thread esta esperando este objeto
-                lex.notify();
+                synchronized (lex) {
+                    lex.notify();
+                }
             }
         }
     }
 
     private class CompilingThread implements Runnable {
         @Override
-        public void run() {            
+        public void run() {
+            Syntactic syntactic = new Syntactic();
+            CompilerError error = null;
+            error = syntactic.execute();
+            setOutput(error);
+
+            // Apenas a main Thread esta esperando este objeto
+            synchronized (compilation) {
+                compilation.notify();
+            }
         }        
     }
 }
