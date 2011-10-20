@@ -10,12 +10,15 @@ import comp.app.log.C_Log;
 
 public class Compiler {
     private File mSourceFile;
-    
+
     private Object lex = new Object();
-    private CompilerError mLexicalOutput = CompilerError.instantiateError(CompilerError.NOT_INITIALIZED, 0, 0, null);;
+    private CompilerError mLexicalOutput = CompilerError.instantiateError(CompilerError.NOT_INITIALIZED, 0, 0);
 
     private Object compilation = new Object();
-    private CompilerError mOutput = CompilerError.instantiateError(CompilerError.NOT_INITIALIZED, 0, 0, null);
+    private CompilerError mOutput = CompilerError.instantiateError(CompilerError.NOT_INITIALIZED, 0, 0);
+
+    private Thread mLexicalThread;
+    private Thread mCompilingThread;
 
     /**
      * @param args
@@ -26,7 +29,7 @@ public class Compiler {
 
         // Limpa todos os arquivos de log
         C_Log.clearLogFiles();
-        
+
         if (f != null && f.exists()) {
             new Compiler(f).compile();
         }
@@ -37,10 +40,13 @@ public class Compiler {
     }
 
     public void compile() {
-        // TODO inicia as threds para a compilação
-        new Thread(new LexicalThread(mSourceFile)).start();
-        new Thread(new CompilingThread()).start();
-        
+        // Inicia as threds para a compilação
+        mLexicalThread = new Thread(new LexicalThread(mSourceFile));
+        mCompilingThread = new Thread(new CompilingThread());
+
+        mLexicalThread.start();
+        mCompilingThread.start();
+
         // Agora a thread principal espera a compilacao
         synchronized (lex) {
             while (mLexicalOutput.getErrorCode() == CompilerError.NOT_INITIALIZED) {
@@ -51,7 +57,7 @@ public class Compiler {
                 }
             }
         }
-        
+
         // Checa erros por prioridades
         /*
          * 1 - Erro lexico
@@ -71,7 +77,7 @@ public class Compiler {
                     }
                 }
             }
-            
+
             // Checa erros do restante da compilacao (Sintatico e semantico)
             if (getOutput().getErrorCode() != CompilerError.NONE_ERROR_CODE) {
                 // TODO informa erro
@@ -79,7 +85,7 @@ public class Compiler {
             } else {
                 // TODO compilacao concluida com sucesso
                 System.out.println("Sucesso!!");
-            }   
+            }
         }
     }
 
@@ -110,10 +116,10 @@ public class Compiler {
     /*
      * Threads que serao usadas para a compilacao (alem da principal)
      */
-    
+
     private class LexicalThread implements Runnable {
         private File mSourceFile;
-        
+
         public LexicalThread(File sourceFile) {
             mSourceFile = sourceFile;
         }
@@ -129,7 +135,7 @@ public class Compiler {
                 setLexicalOutput(error);
             } catch (IOException e) {
                 C_Log.error("Erro no arquivo!", e);
-                setLexicalOutput(CompilerError.instantiateError(CompilerError.INVALID_FILE_ERROR, 0, 0, null));
+                setLexicalOutput(CompilerError.instantiateError(CompilerError.INVALID_FILE_ERROR, 0, 0));
             } finally {
                 // Apenas a main Thread esta esperando este objeto
                 synchronized (lex) {
@@ -142,7 +148,7 @@ public class Compiler {
     private class CompilingThread implements Runnable {
         @Override
         public void run() {
-            Syntactic syntactic = new Syntactic();
+            Syntactic syntactic = new Syntactic(mLexicalThread);
             CompilerError error = null;
             error = syntactic.execute();
             setOutput(error);
@@ -151,6 +157,6 @@ public class Compiler {
             synchronized (compilation) {
                 compilation.notify();
             }
-        }        
+        }
     }
 }
