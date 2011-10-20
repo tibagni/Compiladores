@@ -43,6 +43,7 @@ public class Syntactic extends Algorithm {
                 return CompilerError.instantiateError(CompilerError.ILLEGAL_END_PROGRAM, 0, 0, this);
             }
 
+            // TODO lexicalThread.join(); espera a thread do lexico morrer antes da ultima verificação
             if (!mTokenList.isLexicalFinishedWithouError()) {
             	// ErroLexico - UnknownError
             	return CompilerError.instantiateError(CompilerError.UNKNOWN_ERROR_CODE, 0, 0, this);
@@ -316,8 +317,8 @@ public class Syntactic extends Algorithm {
             		    return CompilerError.instantiateError(CompilerError.UNKNOWN_ERROR_CODE, 0, 0, this);
             		}
             	} else {
-             		error = CompilerError.instantiateError(CompilerError.ILLEGAL_END_EXPRESSION, 
-             		       mCurrentToken.getTokenLine(), mCurrentToken.getTokenEndColumn(), this); 
+             		return CompilerError.instantiateError(CompilerError.ILLEGAL_END_EXPRESSION, 
+             		       mCurrentToken.getTokenLine(), mCurrentToken.getTokenEndColumn(), this);             		
             	}
             }
             mCurrentToken = mTokenList.getTokenFromBuffer();
@@ -492,6 +493,7 @@ public class Syntactic extends Algorithm {
         while (mCurrentToken.getSymbol() == Symbols.SMULT || mCurrentToken.getSymbol() == Symbols.SDIV 
                 || mCurrentToken.getSymbol() == Symbols.SE) {
             mCurrentToken = mTokenList.getTokenFromBuffer();
+            error = factorAnalyser();
         }
         return error;
     }
@@ -504,17 +506,17 @@ public class Syntactic extends Algorithm {
         }
         
         if(mCurrentToken.getSymbol() == Symbols.SIDENTIFICADOR) {
-            if(mLabel == 1) {// TODO pesquisa_tabela(token.lexema,nível,ind 
-                if(mLabel == 1/* TODO TabSimb[ind].tipo = “função inteiro”) ou  
-                        (TabSimb[ind].tipo = “função booleano”*/) {
-                    error = processFuncCall();
-                    if(error.getErrorCode() != CompilerError.NONE_ERROR_CODE) return error;
-                } else { 
+            //if(mLabel == 1) {// TODO pesquisa_tabela(token.lexema,nível,ind 
+                //if(mLabel == 1/* TODO TabSimb[ind].tipo = “função inteiro”) ou  
+                //        (TabSimb[ind].tipo = “função booleano”*/) {
+                    //error = processFuncCall();
+                    //if(error.getErrorCode() != CompilerError.NONE_ERROR_CODE) return error;
+                //} else { 
                     mCurrentToken = mTokenList.getTokenFromBuffer();
-                }
-            } else {
+                //}
+            //} else {
                 //TODO erro semantico
-            }
+            //}
         } else if(mCurrentToken.getSymbol() == Symbols.SNUMERO) {
             mCurrentToken = mTokenList.getTokenFromBuffer();
         } else if(mCurrentToken.getSymbol() == Symbols.SNAO) {
@@ -574,7 +576,7 @@ public class Syntactic extends Algorithm {
         if (mCurrentToken != null && mCurrentToken.getSymbol() == Symbols.SABRE_PARENTESES) {
             mCurrentToken = mTokenList.getTokenFromBuffer();
             if (mCurrentToken != null && mCurrentToken.getSymbol() == Symbols.SIDENTIFICADOR) {
-                if (mLabel == 3 /* TODO se variavel esta na tabela (token.lexema)*/) {
+                //if (/* TODO se variavel esta na tabela (token.lexema)*/) {
                     mCurrentToken = mTokenList.getTokenFromBuffer();
                     if (mCurrentToken != null && mCurrentToken.getSymbol() == Symbols.SFECHA_PARENTESES) {
                         mCurrentToken = mTokenList.getTokenFromBuffer();
@@ -585,9 +587,9 @@ public class Syntactic extends Algorithm {
                         error = CompilerError.instantiateError(CompilerError.ILLEGAL_END_EXPRESSION,
                                 line, col, this);
                     }
-                } else {
+                //} else {
                     // TODO erro semantico
-                }
+                //}
             } else {
                 // Erro - nao e identificador
             }
@@ -605,7 +607,7 @@ public class Syntactic extends Algorithm {
         if (mCurrentToken != null && mCurrentToken.getSymbol() == Symbols.SABRE_PARENTESES) {
             mCurrentToken = mTokenList.getTokenFromBuffer();
             if (mCurrentToken != null && mCurrentToken.getSymbol() == Symbols.SIDENTIFICADOR) {
-                if (mLabel == 3 /* TODO se variavel ou funcao esta na tabela (token.lexema)*/) {
+                //if (/* TODO se variavel ou funcao esta na tabela (token.lexema)*/) {
                     mCurrentToken = mTokenList.getTokenFromBuffer();
                     if (mCurrentToken != null && mCurrentToken.getSymbol() == Symbols.SFECHA_PARENTESES) {
                         mCurrentToken = mTokenList.getTokenFromBuffer();
@@ -616,9 +618,9 @@ public class Syntactic extends Algorithm {
                         error = CompilerError.instantiateError(CompilerError.ILLEGAL_END_EXPRESSION,
                                 line, col, this);
                     }
-                } else {
+                //} else {
                     // TODO erro semantico
-                }
+                //}
             } else {
                 // TODO erro, nao e identificador
             }

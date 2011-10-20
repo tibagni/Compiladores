@@ -61,7 +61,7 @@ public class Tokens {
     }
 
     public synchronized boolean isLexicalFinishedWithouError() {
-        return mIsLexicalFinished && (mTokenBuffer.remainingCapacity() == 0);
+        return mIsLexicalFinished && (mTokenBuffer.size() == 0);
     }
 
     private boolean checkClassPermission(Class<?> expectedClass) {
