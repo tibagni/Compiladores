@@ -22,15 +22,16 @@ public class CompilerError {
     public static final int UNKNOWN_RETURN_TYPE             = 12; //
     public static final int ILLEGAL_RETURN_TYPE_DECLARATION = 13; //
     public static final int ILLEGAL_CMD_BLOCK_DECLARATION   = 14; // faltando 'inicio'
-    public static final int OPEN_PARENTHESIS_EXPECTED       = 15; // faltando ')'
+    public static final int OPEN_PARENTHESIS_EXPECTED       = 15; // faltando '('
     public static final int MISSING_CLOSE_PARENTHESIS       = 16; // faltando ')'
     public static final int INVALID_PROC_FUNC_NAME          = 17; //
     public static final int MALFORMED_IF_CONSTRUCTION       = 18; // faltando 'entao'
     public static final int MALFORMED_WHILE_CONSTRUCTION    = 19; // faltando 'faca'
     public static final int WRONG_READ_WRITE_ARGUMENT       = 20; // argumento nao eh identificador
+    public static final int MALFORMED_EXPRESSION            = 21; // Expressao incorreta
 
     // SEMANTICO
-    public static final int DUPLICATED_VAR                  = 21;
+    public static final int DUPLICATED_VAR                  = 22;
 
     // Outros
     public static final int INVALID_FILE_ERROR              = 100;
@@ -129,7 +130,7 @@ public class CompilerError {
                 lineNumber + " coluna: " + colNumber;
 
             case ILLEGAL_VAR_TYPE_DECLARATION:
-                return "Declaração de variável incorreta (´:´ inesperado) - linha: " +
+                return "Declaração de variável incorreta (':' inesperado) - linha: " +
                 lineNumber + " coluna: " + colNumber;
 
             case ILLEGAL_PROC_FUNC_DECLARATION:
@@ -141,11 +142,11 @@ public class CompilerError {
                 lineNumber + " coluna: " + colNumber;
 
             case ILLEGAL_RETURN_TYPE_DECLARATION:
-                return "Declaração de função incorreta (´:´ faltando) - linha: " +
+                return "Declaração de função incorreta (':' faltando) - linha: " +
                 lineNumber + " coluna: " + colNumber;
 
             case ILLEGAL_CMD_BLOCK_DECLARATION:
-                return "Bloco de comando incorreto (´inicio´ faltando) - linha: " +
+                return "Bloco de comando incorreto ('inicio' faltando) - linha: " +
                 lineNumber + " coluna: " + colNumber;
 
             case OPEN_PARENTHESIS_EXPECTED:
@@ -157,20 +158,24 @@ public class CompilerError {
                 lineNumber + " coluna: " + colNumber;
 
             case INVALID_PROC_FUNC_NAME:
-                return "Procedimento;Função inálido ou inexistente - linha: " +
+                return "Procedimento/Função inválido ou inexistente - linha: " +
                 lineNumber + " coluna: " + colNumber;
 
             case MALFORMED_IF_CONSTRUCTION:
-                return "Erro na construção do comando se (´entao´ faltando) - linha: " +
+                return "Erro na construção do comando se ('entao' faltando) - linha: " +
                 lineNumber + " coluna: " + colNumber;
 
             case MALFORMED_WHILE_CONSTRUCTION:
-                return "Erro na construção do comando enquanto (´faca´ faltando) - linha: " +
+                return "Erro na construção do comando enquanto ('faca' faltando) - linha: " +
                 lineNumber + " coluna: " + colNumber;
 
             case WRONG_READ_WRITE_ARGUMENT:
                 return "Argumento inválido ao executar leia/escreva - linha: " +
                 lineNumber + " coluna: " + colNumber;
+
+            case MALFORMED_EXPRESSION:
+                return "Expressão mal formada - linha: " +
+                lineNumber;
 
             /* Erros da analise semantica *************************************/
 

@@ -1,7 +1,7 @@
 {Teste de ponto e virgula excedente}
 programa test1;
 
-var a,b,c: inteiro;
+var a,b,c : inteiro;
 
 {proc 1}
 procedimento analisa1;
@@ -11,9 +11,9 @@ inicio
   se x>1  entao
       x:= 0;
 
-  enquanto (a > 89) e (a<= 1000)  {condicao de parada}
+  enquanto (a > 89) e (a = 1000)  {condicao de parada}
   faca inicio
-           a:= x+z
+           a := x + z
        fim;
   escreva(a)
 fim;

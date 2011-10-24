@@ -5,6 +5,7 @@ import java.io.IOException;
 
 import comp.app.alg.Lexical;
 import comp.app.alg.Syntactic;
+import comp.app.alg.Tokens;
 import comp.app.error.CompilerError;
 import comp.app.log.C_Log;
 
@@ -44,6 +45,8 @@ public class Compiler {
         mLexicalThread = new Thread(new LexicalThread(mSourceFile));
         mCompilingThread = new Thread(new CompilingThread());
 
+        Tokens.getInstance().setConsumerThread(mCompilingThread);
+
         mLexicalThread.start();
         mCompilingThread.start();
 
@@ -65,6 +68,7 @@ public class Compiler {
          */
         if (getLexicalOutput().getErrorCode() != CompilerError.NONE_ERROR_CODE) {
             // TODO informa erro ao usuario e a outra thread para que sua execucao seja cnacelada
+            mCompilingThread.interrupt();
             System.out.println(getLexicalOutput().getErrorMessage());
         } else {
             // Espera a segunda thread terminar para verificar o status da compilacao

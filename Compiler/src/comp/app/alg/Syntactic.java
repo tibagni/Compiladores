@@ -99,7 +99,12 @@ public class Syntactic extends Algorithm {
                             int col  = mCurrentToken == null ? 0 : mCurrentToken.getTokenEndColumn();
                             error = CompilerError.instantiateError(CompilerError.ILLEGAL_END_EXPRESSION,
                             		line, col);
+                            // Sai do loop e retorna o erro
+                            break;
                         }
+                    } else {
+                        // Se deu erro, sai do loop e retorna
+                        break;
                     }
                 }
             } else {
@@ -109,7 +114,7 @@ public class Syntactic extends Algorithm {
                 error = CompilerError.instantiateError(CompilerError.ILLEGAL_VAR_DECLARATION, line,
                         col);
             }
-        } else if (mCurrentToken == null) {
+        } else if (mCurrentToken == null && error.getErrorCode() == CompilerError.NONE_ERROR_CODE) {
             // ErroLexico - UnknownError
             error = CompilerError.instantiateError(CompilerError.UNKNOWN_ERROR_CODE, 0, 0);
         }
@@ -138,6 +143,7 @@ public class Syntactic extends Algorithm {
                         if (mCurrentToken.getSymbol() == Symbols.SDOISPONTOS) {
                             error = CompilerError.instantiateError(CompilerError.ILLEGAL_VAR_TYPE_DECLARATION,
                             		mCurrentToken.getTokenLine(), mCurrentToken.getTokenEndColumn());
+                            break;
                         }
                     } else {
                         // Token Null - Unknown error
@@ -145,13 +151,6 @@ public class Syntactic extends Algorithm {
                         break;
                     }
                 }
-            } else {
-                // Se o token for null, setamos a linha e a coluna baseado no ultimo token valido
-                int line = mCurrentToken == null ? lastToken.getTokenLine() : mCurrentToken.getTokenLine();
-                int col  = mCurrentToken == null ? lastToken.getTokenEndColumn() : mCurrentToken.getTokenEndColumn();
-                error = CompilerError.instantiateError(CompilerError.ILLEGAL_VAR_TYPE_DECLARATION, line,
-                        col);
-                break;
             }
 
         } while (mCurrentToken.getSymbol() != Symbols.SDOISPONTOS);
@@ -197,6 +196,8 @@ public class Syntactic extends Algorithm {
         	} else {
         		error = processFuncDeclaration();
         	}
+
+        	if (error.getErrorCode() != CompilerError.NONE_ERROR_CODE) return error;
 
         	if (mCurrentToken != null && mCurrentToken.getSymbol() == Symbols.SPONTO_VIRGULA) {
         		mCurrentToken = mTokenList.getTokenFromBuffer();
@@ -321,11 +322,15 @@ public class Syntactic extends Algorithm {
         if (mCurrentToken != null && mCurrentToken.getSymbol() == Symbols.SINICIO) {
             mCurrentToken = mTokenList.getTokenFromBuffer();
             error = processSimpleCommand();
+
+            if (error.getErrorCode() != CompilerError.NONE_ERROR_CODE) return error;
+
             if (mCurrentToken == null) {
                 return CompilerError.instantiateError(CompilerError.UNKNOWN_ERROR_CODE, 0, 0);
             }
 
             while (mCurrentToken.getSymbol() != Symbols.SFIM) {
+                if (error.getErrorCode() != CompilerError.NONE_ERROR_CODE) break;
             	if (mCurrentToken.getSymbol() == Symbols.SPONTO_VIRGULA) {
             		mCurrentToken = mTokenList.getTokenFromBuffer();
             		if (mCurrentToken != null && mCurrentToken.getSymbol() != Symbols.SFIM) {
@@ -447,7 +452,7 @@ public class Syntactic extends Algorithm {
             // Se o token for null, setamos a linha e a coluna como '0' para evitar NullPointerException
             int line = mCurrentToken == null ? 0 : mCurrentToken.getTokenLine();
             int col  = mCurrentToken == null ? 0 : mCurrentToken.getTokenEndColumn();
-            return CompilerError.instantiateError(CompilerError.MALFORMED_IF_CONSTRUCTION, line, col);
+            error = CompilerError.instantiateError(CompilerError.MALFORMED_IF_CONSTRUCTION, line, col);
         }
 
         return error;
@@ -554,7 +559,7 @@ public class Syntactic extends Algorithm {
             if(mCurrentToken.getSymbol() == Symbols.SFECHA_PARENTESES) {
                 mCurrentToken = mTokenList.getTokenFromBuffer();
             } else {
-                error = CompilerError.instantiateError(CompilerError.MISSING_CLOSE_PARENTHESIS,
+                error = CompilerError.instantiateError(CompilerError.MALFORMED_EXPRESSION,
                         mCurrentToken.getTokenLine(), mCurrentToken.getTokenEndColumn());
             }
         } else {
