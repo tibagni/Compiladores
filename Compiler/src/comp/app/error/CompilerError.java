@@ -16,22 +16,23 @@ public class CompilerError {
     public static final int ILLEGAL_END_EXPRESSION          = 6;  // Faltando ';'
     public static final int ILLEGAL_END_PROGRAM             = 7;
     public static final int UNKNOWN_TYPE                    = 8;
-    public static final int ILLEGAL_VAR_DECLARATION         = 9;
-    public static final int ILLEGAL_VAR_TYPE_DECLARATION    = 10; // ':' no lugar errado
-    public static final int ILLEGAL_PROC_FUNC_DECLARATION   = 11; // identificador esperado
-    public static final int UNKNOWN_RETURN_TYPE             = 12; //
-    public static final int ILLEGAL_RETURN_TYPE_DECLARATION = 13; //
-    public static final int ILLEGAL_CMD_BLOCK_DECLARATION   = 14; // faltando 'inicio'
-    public static final int OPEN_PARENTHESIS_EXPECTED       = 15; // faltando '('
-    public static final int MISSING_CLOSE_PARENTHESIS       = 16; // faltando ')'
-    public static final int INVALID_PROC_FUNC_NAME          = 17; //
-    public static final int MALFORMED_IF_CONSTRUCTION       = 18; // faltando 'entao'
-    public static final int MALFORMED_WHILE_CONSTRUCTION    = 19; // faltando 'faca'
-    public static final int WRONG_READ_WRITE_ARGUMENT       = 20; // argumento nao eh identificador
-    public static final int MALFORMED_EXPRESSION            = 21; // Expressao incorreta
+    public static final int ILLEGAL_VAR_DECLARATION         = 9;  // Nome da variavel invalido
+    public static final int MALFORMED_VAR_DECLARATION       = 10;
+    public static final int ILLEGAL_VAR_TYPE_DECLARATION    = 11; // ':' no lugar errado
+    public static final int ILLEGAL_PROC_FUNC_DECLARATION   = 12; // identificador esperado
+    public static final int UNKNOWN_RETURN_TYPE             = 13; //
+    public static final int ILLEGAL_RETURN_TYPE_DECLARATION = 14; //
+    public static final int ILLEGAL_CMD_BLOCK_DECLARATION   = 15; // faltando 'inicio'
+    public static final int OPEN_PARENTHESIS_EXPECTED       = 16; // faltando '('
+    public static final int MISSING_CLOSE_PARENTHESIS       = 17; // faltando ')'
+    public static final int INVALID_PROC_FUNC_NAME          = 18; //
+    public static final int MALFORMED_IF_CONSTRUCTION       = 19; // faltando 'entao'
+    public static final int MALFORMED_WHILE_CONSTRUCTION    = 20; // faltando 'faca'
+    public static final int WRONG_READ_WRITE_ARGUMENT       = 21; // argumento nao eh identificador
+    public static final int MALFORMED_EXPRESSION            = 22; // Expressao incorreta
 
     // SEMANTICO
-    public static final int DUPLICATED_VAR                  = 22;
+    public static final int DUPLICATED_VAR                  = 23;
 
     // Outros
     public static final int INVALID_FILE_ERROR              = 100;
@@ -128,6 +129,10 @@ public class CompilerError {
             case ILLEGAL_VAR_DECLARATION:
                 return "Nome de variável inválido - linha: " +
                 lineNumber + " coluna: " + colNumber;
+
+            case MALFORMED_VAR_DECLARATION:
+                return "Declaração de variável incorreta - linha: " +
+                		lineNumber;
 
             case ILLEGAL_VAR_TYPE_DECLARATION:
                 return "Declaração de variável incorreta (':' inesperado) - linha: " +

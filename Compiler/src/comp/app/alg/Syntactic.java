@@ -5,6 +5,17 @@ import comp.app.Token;
 import comp.app.error.CompilerError;
 import comp.app.log.C_Log;
 
+/*
+ * *********************************CONSIDERACOES********************************
+ *
+ * 1 - Quando um erro ocorre durante a analise lexical, esta thread e interrompida
+ * e, se for interrompida no momento da leitura de um token, o token retornado sera nulo
+ *
+ * 2 - Quando ocorrer um erro durante a analise lexical, nao importa qual erro sera retornado
+ * pois, o erro que sera levado em conta sera o erro lexical. Por isso e usado UNKNOWN_ERROR
+ * quando um token e nulo (quando esta thread for interrompida no momento da leitura do token)
+ */
+
 public class Syntactic extends Algorithm {
     private Tokens mTokenList = Tokens.getInstance();
     private Token mCurrentToken;
@@ -123,8 +134,6 @@ public class Syntactic extends Algorithm {
     }
 
     private CompilerError processVariables() {
-        // Usado para informar linha e coluna do erro se o token atual for nulo
-        Token lastToken = mCurrentToken;
         CompilerError error = CompilerError.NONE();
         do {
             // TODO procura variavel duplicada na tabela de simbolos
@@ -136,7 +145,6 @@ public class Syntactic extends Algorithm {
             mCurrentToken = mTokenList.getTokenFromBuffer();
             if (mCurrentToken != null && (mCurrentToken.getSymbol() == Symbols.SVIRGULA ||
                     mCurrentToken.getSymbol() == Symbols.SDOISPONTOS)) {
-                lastToken = mCurrentToken;
                 if (mCurrentToken.getSymbol() == Symbols.SVIRGULA) {
                     mCurrentToken = mTokenList.getTokenFromBuffer();
                     if (mCurrentToken != null) {
@@ -151,8 +159,13 @@ public class Syntactic extends Algorithm {
                         break;
                     }
                 }
+            } else {
+                // Se o token for null, setamos a linha e a coluna como '0' para evitar NullPointerException
+                int line = mCurrentToken == null ? 0 : mCurrentToken.getTokenLine();
+                int col  = mCurrentToken == null ? 0 : mCurrentToken.getTokenEndColumn();
+                error = CompilerError.instantiateError(CompilerError.MALFORMED_VAR_DECLARATION, line, col);
+                break;
             }
-
         } while (mCurrentToken.getSymbol() != Symbols.SDOISPONTOS);
         if (error.getErrorCode() == CompilerError.NONE_ERROR_CODE) {
             mCurrentToken = mTokenList.getTokenFromBuffer();
@@ -343,6 +356,11 @@ public class Syntactic extends Algorithm {
              		return CompilerError.instantiateError(CompilerError.ILLEGAL_END_EXPRESSION,
              		       mCurrentToken.getTokenLine(), mCurrentToken.getTokenEndColumn());
             	}
+
+                if (mCurrentToken == null) {
+                    error = CompilerError.instantiateError(CompilerError.UNKNOWN_ERROR_CODE, 0, 0);
+                    break;
+                }
             }
             mCurrentToken = mTokenList.getTokenFromBuffer();
         } else {
@@ -518,11 +536,16 @@ public class Syntactic extends Algorithm {
 
         error = analyseFactor();
         if(error.getErrorCode() != CompilerError.NONE_ERROR_CODE) return error;
+        if(mCurrentToken == null) return CompilerError.instantiateError(CompilerError.UNKNOWN_ERROR_CODE, 0, 0);
 
         while (mCurrentToken.getSymbol() == Symbols.SMULT || mCurrentToken.getSymbol() == Symbols.SDIV
                 || mCurrentToken.getSymbol() == Symbols.SE) {
             mCurrentToken = mTokenList.getTokenFromBuffer();
             error = analyseFactor();
+            if (mCurrentToken == null) {
+                error = CompilerError.instantiateError(CompilerError.UNKNOWN_ERROR_CODE, 0, 0);
+                break;
+            }
         }
         return error;
     }

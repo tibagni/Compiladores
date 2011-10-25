@@ -1,13 +1,14 @@
 package comp.app.alg;
 
-import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import comp.app.Token;
 
 
 public class Tokens {
     private static Tokens sInstance;
-    private ArrayBlockingQueue<Token> mTokenBuffer;
+    private BlockingQueue<Token> mTokenBuffer;
     private volatile boolean mIsLexicalFinished;
     private volatile boolean mIsWaitingNextToken = false;
     private Thread mConsumerThread;
@@ -24,7 +25,7 @@ public class Tokens {
     }
 
     private Tokens() {
-        mTokenBuffer = new ArrayBlockingQueue<Token>(800); //FIXME mudar para LinkedListBlockingQueue
+        mTokenBuffer = new LinkedBlockingQueue<Token>();
         mIsLexicalFinished = false;
     }
 

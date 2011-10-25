@@ -16,10 +16,10 @@ public class Lexical extends Algorithm {
     private static final int EOF             = 65535; // FIXME arrumar fim de arquivo
     private static final int CARRIEGE_RETURN = 13;
     private static final int LINE_FEED       = 10;
-    private static final int TAB	     = 9;
+    private static final int TAB	         = 9;
 
     private int              lineNumber      = 1;
-    private int              colNumber       = 0;
+    private int              colNumber       = 1;
 
 
     private Tokens mTokenList      = Tokens.getInstance();
@@ -53,6 +53,12 @@ public class Lexical extends Algorithm {
                         while (nextChar != '}' && nextChar != EOF) {
                             // Consome caractere dentro do comentario (ignora).
                         	nextChar = readNextChar(reader);
+
+                        	// Mesmo dentro dos comentarios ainda devemos pular linhas
+                        	if (nextChar == LINE_FEED) {
+                        	    lineNumber++;
+                        	    colNumber = 0;
+                        	}
                         }
                         if (nextChar != '}') {
                             // Erro (Comentario nao fechado)
@@ -64,9 +70,9 @@ public class Lexical extends Algorithm {
                         // Le o ultimo caractere do comentario ('}') e ignora
                         nextChar = readNextChar(reader);
 
-                    } else if (nextChar == LINE_FEED) { // Lê o caractere line_feed e o ignora
-                        lineNumber++;	// Incrementa o contador de linhas
-                        colNumber = 0; // Reseta contador de colunas na proxima linha
+                    } else if (nextChar == LINE_FEED) {
+                        lineNumber++;
+                        colNumber = 0;
                         nextChar = readNextChar(reader);
                     }
 
@@ -82,7 +88,8 @@ public class Lexical extends Algorithm {
                         StringBuilder num = new StringBuilder();
                         num.append(nextChar);
                         nextChar = readNextChar(reader);
-                        while (isNumber(nextChar)) { //Concatena com todos os proximos digitos
+                       //Concatena com todos os proximos digitos
+                        while (isNumber(nextChar)) {
                             num.append(nextChar);
                             nextChar = readNextChar(reader);
                         }
@@ -94,8 +101,9 @@ public class Lexical extends Algorithm {
                         StringBuilder id = new StringBuilder();
                         id.append(nextChar);
                         nextChar = readNextChar(reader);
+                        // Concatena com letras, digitos e/ou "_"
                         while (isLetter(nextChar) || isNumber(nextChar)
-                                || nextChar == '_') { // Concatena com letras, digitos e/ou "_"
+                                || nextChar == '_') {
                             id.append(nextChar);
                             nextChar = readNextChar(reader);
                         }
@@ -107,7 +115,7 @@ public class Lexical extends Algorithm {
                         if (symbol != null) {
                             token.setSimbolo(symbol.intValue());
                         } else {
-                            token.setSimbolo(Symbols.SIDENTIFICADOR); // que o simbolo é um identificador
+                            token.setSimbolo(Symbols.SIDENTIFICADOR);
                         }
 
                     } else if (nextChar == ':') {
@@ -170,7 +178,6 @@ public class Lexical extends Algorithm {
                                         Symbols.SDIF, lineNumber, colNumber);
                                 nextChar = readNextChar(reader);
                             } else {
-                                // Erro (simbolo nao existe)
                                 error = CompilerError.instantiateError(CompilerError.INVALID_SYMBOL_ERROR_CODE,
                                         lineNumber, (colNumber-1));
                                 break;
@@ -194,7 +201,6 @@ public class Lexical extends Algorithm {
                         nextChar = readNextChar(reader);
 
                     } else {
-                        // Erro
                         error = CompilerError.instantiateError(CompilerError.INVALID_CHAR_ERROR_CODE,
                                 lineNumber, (colNumber-1));
                         break;
@@ -204,9 +210,14 @@ public class Lexical extends Algorithm {
 
                 // Insere Token na lista
                 if (token != null) {
-                    mTokenList.insertTokenInBuffer(token);
-                    //Log para debugar.
+                    boolean ret = mTokenList.insertTokenInBuffer(token);
+
                     if(C_Log.ENABLED) C_Log.logToken(token);
+                    if (C_Log.ENABLED) {
+                        if (!ret) {
+                            C_Log.message("Token falhou ao ser inserido!: " + token.toString());
+                        }
+                    }
                 }
             }
             reader.close();
