@@ -102,11 +102,11 @@ public class Lexical extends Algorithm {
                         // Cria o token primeiramente com simbolo indefinido
                         token = new Token(id.toString(), Symbols.SINDEFINIDO, lineNumber, colNumber);
 
-                        // Agora verifica qual e o simbolo deste token
-                        try {
-                            token.setSimbolo(Symbols.KEY_WORD
-                                    .get(id.toString()));
-                        } catch (NullPointerException e) {      // Se esta excessao for gerada, quer dizer
+                        // Agora verifica qual e o simbolo deste token (identificador ou palavra reservada)
+                        Integer symbol = Symbols.KEY_WORD.get(id.toString());
+                        if (symbol != null) {
+                            token.setSimbolo(symbol.intValue());
+                        } else {
                             token.setSimbolo(Symbols.SIDENTIFICADOR); // que o simbolo é um identificador
                         }
 

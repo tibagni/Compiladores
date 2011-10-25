@@ -24,7 +24,7 @@ public class Tokens {
     }
 
     private Tokens() {
-        mTokenBuffer = new ArrayBlockingQueue<Token>(80);
+        mTokenBuffer = new ArrayBlockingQueue<Token>(800); //FIXME mudar para LinkedListBlockingQueue
         mIsLexicalFinished = false;
     }
 
@@ -45,6 +45,7 @@ public class Tokens {
             while (!inserted && tries < 3) {
                 try { Thread.sleep(10); } catch (InterruptedException e) { /* Nao e para acontecer */ }
                 inserted = mTokenBuffer.offer(t);
+                tries++;
             }
         }
         return inserted;
