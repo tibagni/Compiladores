@@ -54,7 +54,7 @@ public class Syntactic extends Algorithm {
         }
 
         error = analyseBlock();
-        if (error.getErrorCode() == CompilerError.NONE_ERROR_CODE) {
+        if (error.getErrorCode() == CompilerError.NONE_ERROR) {
             if (mCurrentToken == null
                     || mCurrentToken.getSymbol() != Symbols.SPONTO) {
                 return CompilerError.instantiateError(CompilerError.ILLEGAL_END_PROGRAM, 0, 0);
@@ -67,12 +67,12 @@ public class Syntactic extends Algorithm {
                 } catch (InterruptedException e) {
                     C_Log.error("Erro enquanto espera a thread que executa" +
                     		" o analisador lexical terminar", e);
-                    return CompilerError.instantiateError(CompilerError.UNKNOWN_ERROR_CODE, 0, 0);
+                    return CompilerError.instantiateError(CompilerError.UNKNOWN_ERROR, 0, 0);
                 }
             }
             if (!mTokenList.isLexicalFinishedWithouError()) {
             	// ErroLexico - UnknownError
-            	return CompilerError.instantiateError(CompilerError.UNKNOWN_ERROR_CODE, 0, 0);
+            	return CompilerError.instantiateError(CompilerError.UNKNOWN_ERROR, 0, 0);
             }
         }
 
@@ -84,10 +84,10 @@ public class Syntactic extends Algorithm {
         mCurrentToken = mTokenList.getTokenFromBuffer();
 
         error = processVarDeclaration();
-        if (error.getErrorCode() == CompilerError.NONE_ERROR_CODE) {
+        if (error.getErrorCode() == CompilerError.NONE_ERROR) {
             error = processSubRoutine();
         }
-        if (error.getErrorCode() == CompilerError.NONE_ERROR_CODE) {
+        if (error.getErrorCode() == CompilerError.NONE_ERROR) {
             error = processCommands();
         }
 
@@ -101,7 +101,7 @@ public class Syntactic extends Algorithm {
             if (mCurrentToken != null && mCurrentToken.getSymbol() == Symbols.SIDENTIFICADOR) {
                 while (mCurrentToken.getSymbol() == Symbols.SIDENTIFICADOR) {
                     error = processVariables();
-                    if (error.getErrorCode() == CompilerError.NONE_ERROR_CODE) {
+                    if (error.getErrorCode() == CompilerError.NONE_ERROR) {
                         if (mCurrentToken != null && mCurrentToken.getSymbol() == Symbols.SPONTO_VIRGULA) {
                             mCurrentToken = mTokenList.getTokenFromBuffer();
                         } else {
@@ -125,9 +125,9 @@ public class Syntactic extends Algorithm {
                 error = CompilerError.instantiateError(CompilerError.ILLEGAL_VAR_DECLARATION, line,
                         col);
             }
-        } else if (mCurrentToken == null && error.getErrorCode() == CompilerError.NONE_ERROR_CODE) {
+        } else if (mCurrentToken == null && error.getErrorCode() == CompilerError.NONE_ERROR) {
             // ErroLexico - UnknownError
-            error = CompilerError.instantiateError(CompilerError.UNKNOWN_ERROR_CODE, 0, 0);
+            error = CompilerError.instantiateError(CompilerError.UNKNOWN_ERROR, 0, 0);
         }
 
         return error;
@@ -155,7 +155,7 @@ public class Syntactic extends Algorithm {
                         }
                     } else {
                         // Token Null - Unknown error
-                        error = CompilerError.instantiateError(CompilerError.UNKNOWN_ERROR_CODE, 0, 0);
+                        error = CompilerError.instantiateError(CompilerError.UNKNOWN_ERROR, 0, 0);
                         break;
                     }
                 }
@@ -167,7 +167,7 @@ public class Syntactic extends Algorithm {
                 break;
             }
         } while (mCurrentToken.getSymbol() != Symbols.SDOISPONTOS);
-        if (error.getErrorCode() == CompilerError.NONE_ERROR_CODE) {
+        if (error.getErrorCode() == CompilerError.NONE_ERROR) {
             mCurrentToken = mTokenList.getTokenFromBuffer();
             error = analyseType();
         }
@@ -200,7 +200,7 @@ public class Syntactic extends Algorithm {
 
         if (mCurrentToken == null) {
             // Token null - UnknownError
-            return CompilerError.instantiateError(CompilerError.UNKNOWN_ERROR_CODE, 0, 0);
+            return CompilerError.instantiateError(CompilerError.UNKNOWN_ERROR, 0, 0);
         }
 
         while (mCurrentToken.getSymbol() == Symbols.SPROCEDIMENTO || mCurrentToken.getSymbol() == Symbols.SFUNCAO) {
@@ -210,16 +210,22 @@ public class Syntactic extends Algorithm {
         		error = processFuncDeclaration();
         	}
 
-        	if (error.getErrorCode() != CompilerError.NONE_ERROR_CODE) return error;
+        	if (error.getErrorCode() != CompilerError.NONE_ERROR) return error;
 
         	if (mCurrentToken != null && mCurrentToken.getSymbol() == Symbols.SPONTO_VIRGULA) {
         		mCurrentToken = mTokenList.getTokenFromBuffer();
+
+        		if (mCurrentToken == null) {
+                    error = CompilerError.instantiateError(CompilerError.UNKNOWN_ERROR, 0, 0);
+        		    break;
+        		}
         	} else {
         	    // Se o token for null, setamos a linha e a coluna como '0' para evitar NullPointerException
         	    int line = mCurrentToken == null ? 0 : mCurrentToken.getTokenLine();
         	    int col  = mCurrentToken == null ? 0 : mCurrentToken.getTokenEndColumn();
         		error = CompilerError.instantiateError(CompilerError.ILLEGAL_END_EXPRESSION,
         		        line, col);
+        		break;
         	}
         }
         // TODO GERA(label, null, '', '')
@@ -232,7 +238,7 @@ public class Syntactic extends Algorithm {
         mCurrentToken = mTokenList.getTokenFromBuffer();
         if (mCurrentToken == null) {
             // Token null - UnknownError
-            return CompilerError.instantiateError(CompilerError.UNKNOWN_ERROR_CODE, 0, 0);
+            return CompilerError.instantiateError(CompilerError.UNKNOWN_ERROR, 0, 0);
         }
 
         // TODO Nivel = L (marca ou novo galho)
@@ -273,14 +279,14 @@ public class Syntactic extends Algorithm {
         mCurrentToken = mTokenList.getTokenFromBuffer();
         if (mCurrentToken == null) {
             // Token null - UnknownError
-            return CompilerError.instantiateError(CompilerError.UNKNOWN_ERROR_CODE, 0, 0);
+            return CompilerError.instantiateError(CompilerError.UNKNOWN_ERROR, 0, 0);
         }
 
         // TODO Nivel = L (marca ou novo galho)
 
         if (mCurrentToken.getSymbol() == Symbols.SIDENTIFICADOR) {
         	// TODO Pesquisa declaracao1 do procedimento na tabela
-//        	if (mLabel == 3/* TODO se não encontrou na tabela */) {
+//        	if (TODO se não encontrou na tabela) {
        		 	// TODO Insere_tabela(token.lexema,””,nível, rótulo)
         		mCurrentToken = mTokenList.getTokenFromBuffer();
         		if (mCurrentToken != null && mCurrentToken.getSymbol() == Symbols.SDOISPONTOS) {
@@ -336,21 +342,21 @@ public class Syntactic extends Algorithm {
             mCurrentToken = mTokenList.getTokenFromBuffer();
             error = processSimpleCommand();
 
-            if (error.getErrorCode() != CompilerError.NONE_ERROR_CODE) return error;
+            if (error.getErrorCode() != CompilerError.NONE_ERROR) return error;
 
             if (mCurrentToken == null) {
-                return CompilerError.instantiateError(CompilerError.UNKNOWN_ERROR_CODE, 0, 0);
+                return CompilerError.instantiateError(CompilerError.UNKNOWN_ERROR, 0, 0);
             }
 
             while (mCurrentToken.getSymbol() != Symbols.SFIM) {
-                if (error.getErrorCode() != CompilerError.NONE_ERROR_CODE) break;
+                if (error.getErrorCode() != CompilerError.NONE_ERROR) break;
             	if (mCurrentToken.getSymbol() == Symbols.SPONTO_VIRGULA) {
             		mCurrentToken = mTokenList.getTokenFromBuffer();
             		if (mCurrentToken != null && mCurrentToken.getSymbol() != Symbols.SFIM) {
             			error = processSimpleCommand();
             		} else if (mCurrentToken == null) {
             		    // Token null - erro
-            		    return CompilerError.instantiateError(CompilerError.UNKNOWN_ERROR_CODE, 0, 0);
+            		    return CompilerError.instantiateError(CompilerError.UNKNOWN_ERROR, 0, 0);
             		}
             	} else {
              		return CompilerError.instantiateError(CompilerError.ILLEGAL_END_EXPRESSION,
@@ -358,7 +364,7 @@ public class Syntactic extends Algorithm {
             	}
 
                 if (mCurrentToken == null) {
-                    error = CompilerError.instantiateError(CompilerError.UNKNOWN_ERROR_CODE, 0, 0);
+                    error = CompilerError.instantiateError(CompilerError.UNKNOWN_ERROR, 0, 0);
                     break;
                 }
             }
@@ -378,7 +384,7 @@ public class Syntactic extends Algorithm {
         CompilerError error = CompilerError.NONE();
 
         if (mCurrentToken == null) {
-            return CompilerError.instantiateError(CompilerError.UNKNOWN_ERROR_CODE, 0, 0);
+            return CompilerError.instantiateError(CompilerError.UNKNOWN_ERROR, 0, 0);
         }
 
         switch(mCurrentToken.getSymbol()) {
@@ -392,7 +398,7 @@ public class Syntactic extends Algorithm {
                         error = processProcCall(id);
                     }
                 } else {
-                    error = CompilerError.instantiateError(CompilerError.UNKNOWN_ERROR_CODE, 0, 0);
+                    error = CompilerError.instantiateError(CompilerError.UNKNOWN_ERROR, 0, 0);
                 }
         	    break;
         	case Symbols.SSE:
@@ -454,15 +460,15 @@ public class Syntactic extends Algorithm {
         mCurrentToken = mTokenList.getTokenFromBuffer();
         error = analyseExpression();
         // Nao continua se a analise da expressao ja falhou!
-        if (error.getErrorCode() != CompilerError.NONE_ERROR_CODE) return error;
+        if (error.getErrorCode() != CompilerError.NONE_ERROR) return error;
 
         if (mCurrentToken != null && mCurrentToken.getSymbol() == Symbols.SENTAO) {
             mCurrentToken = mTokenList.getTokenFromBuffer();
             error = processSimpleCommand();
             if (mCurrentToken == null) {
-                return CompilerError.instantiateError(CompilerError.UNKNOWN_ERROR_CODE, 0, 0);
+                return CompilerError.instantiateError(CompilerError.UNKNOWN_ERROR, 0, 0);
             }
-            if (error.getErrorCode() == CompilerError.NONE_ERROR_CODE &&
+            if (error.getErrorCode() == CompilerError.NONE_ERROR &&
                     mCurrentToken.getSymbol() == Symbols.SSENAO) {
                 mCurrentToken = mTokenList.getTokenFromBuffer();
                 error = processSimpleCommand();
@@ -484,10 +490,10 @@ public class Syntactic extends Algorithm {
 
         if (mCurrentToken == null) {
             // Token null - erro
-            return CompilerError.instantiateError(CompilerError.UNKNOWN_ERROR_CODE, 0, 0);
+            return CompilerError.instantiateError(CompilerError.UNKNOWN_ERROR, 0, 0);
         }
 
-        if (error.getErrorCode() == CompilerError.NONE_ERROR_CODE
+        if (error.getErrorCode() == CompilerError.NONE_ERROR
                 && (mCurrentToken.getSymbol() == Symbols.SMAIOR
                         || mCurrentToken.getSymbol() == Symbols.SMAIORIG
                         || mCurrentToken.getSymbol() == Symbols.SIG
@@ -504,7 +510,7 @@ public class Syntactic extends Algorithm {
         CompilerError error = CompilerError.NONE();
         if (mCurrentToken == null) {
             // Token null - erro
-            return CompilerError.instantiateError(CompilerError.UNKNOWN_ERROR_CODE, 0, 0);
+            return CompilerError.instantiateError(CompilerError.UNKNOWN_ERROR, 0, 0);
         }
 
         if (mCurrentToken.getSymbol() == Symbols.SMAIS || mCurrentToken.getSymbol() == Symbols.SMENOS) {
@@ -512,10 +518,10 @@ public class Syntactic extends Algorithm {
         }
 
         error = analyseTerm();
-        if (error.getErrorCode() != CompilerError.NONE_ERROR_CODE) return error;
+        if (error.getErrorCode() != CompilerError.NONE_ERROR) return error;
         if (mCurrentToken == null) {
             // Token null - erro
-            return CompilerError.instantiateError(CompilerError.UNKNOWN_ERROR_CODE, 0, 0);
+            return CompilerError.instantiateError(CompilerError.UNKNOWN_ERROR, 0, 0);
         }
 
         while (mCurrentToken.getSymbol() == Symbols.SMAIS || mCurrentToken.getSymbol() == Symbols.SMENOS
@@ -524,9 +530,9 @@ public class Syntactic extends Algorithm {
             error = analyseTerm();
             if (mCurrentToken == null) {
                 // Token null - erro
-                error = CompilerError.instantiateError(CompilerError.UNKNOWN_ERROR_CODE, 0, 0);
+                error = CompilerError.instantiateError(CompilerError.UNKNOWN_ERROR, 0, 0);
             }
-            if (error.getErrorCode() != CompilerError.NONE_ERROR_CODE) break;
+            if (error.getErrorCode() != CompilerError.NONE_ERROR) break;
         }
         return error;
     }
@@ -535,15 +541,15 @@ public class Syntactic extends Algorithm {
         CompilerError error = CompilerError.NONE();
 
         error = analyseFactor();
-        if(error.getErrorCode() != CompilerError.NONE_ERROR_CODE) return error;
-        if(mCurrentToken == null) return CompilerError.instantiateError(CompilerError.UNKNOWN_ERROR_CODE, 0, 0);
+        if(error.getErrorCode() != CompilerError.NONE_ERROR) return error;
+        if(mCurrentToken == null) return CompilerError.instantiateError(CompilerError.UNKNOWN_ERROR, 0, 0);
 
         while (mCurrentToken.getSymbol() == Symbols.SMULT || mCurrentToken.getSymbol() == Symbols.SDIV
                 || mCurrentToken.getSymbol() == Symbols.SE) {
             mCurrentToken = mTokenList.getTokenFromBuffer();
             error = analyseFactor();
             if (mCurrentToken == null) {
-                error = CompilerError.instantiateError(CompilerError.UNKNOWN_ERROR_CODE, 0, 0);
+                error = CompilerError.instantiateError(CompilerError.UNKNOWN_ERROR, 0, 0);
                 break;
             }
         }
@@ -554,7 +560,7 @@ public class Syntactic extends Algorithm {
         CompilerError error = CompilerError.NONE();
         if (mCurrentToken == null) {
             // Token null - erro
-            return CompilerError.instantiateError(CompilerError.UNKNOWN_ERROR_CODE, 0, 0);
+            return CompilerError.instantiateError(CompilerError.UNKNOWN_ERROR, 0, 0);
         }
 
         if(mCurrentToken.getSymbol() == Symbols.SIDENTIFICADOR) {
@@ -578,7 +584,7 @@ public class Syntactic extends Algorithm {
             mCurrentToken = mTokenList.getTokenFromBuffer();
             error = analyseExpression();
             // Se falhou, nao continua
-            if(error.getErrorCode() != CompilerError.NONE_ERROR_CODE) return error;
+            if(error.getErrorCode() != CompilerError.NONE_ERROR) return error;
 
             if(mCurrentToken.getSymbol() == Symbols.SFECHA_PARENTESES) {
                 mCurrentToken = mTokenList.getTokenFromBuffer();
@@ -590,7 +596,8 @@ public class Syntactic extends Algorithm {
                 mCurrentToken.getSymbol() == Symbols.SFALSO) {
             mCurrentToken = mTokenList.getTokenFromBuffer();
         } else {
-            // TODO erro?!?
+            error = CompilerError.instantiateError(CompilerError.MALFORMED_EXPRESSION,
+                    mCurrentToken.getTokenLine(), mCurrentToken.getTokenEndColumn());
         }
 
         return error;
@@ -606,7 +613,7 @@ public class Syntactic extends Algorithm {
         mCurrentToken = mTokenList.getTokenFromBuffer();
         error = analyseExpression();
         // Nao continua se a analise da expressao ja falhou!
-        if (error.getErrorCode() != CompilerError.NONE_ERROR_CODE) return error;
+        if (error.getErrorCode() != CompilerError.NONE_ERROR) return error;
 
         if (mCurrentToken != null && mCurrentToken.getSymbol() == Symbols.SFACA) {
             label2 = mLabel;

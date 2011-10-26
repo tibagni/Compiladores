@@ -13,7 +13,7 @@ public class Tokens {
     private volatile boolean mIsWaitingNextToken = false;
     private Thread mConsumerThread;
 
-    public void setConsumerThread(Thread t) {
+    public synchronized void setConsumerThread(Thread t) {
         mConsumerThread = t;
     }
 

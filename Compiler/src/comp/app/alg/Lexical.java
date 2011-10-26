@@ -62,7 +62,7 @@ public class Lexical extends Algorithm {
                         }
                         if (nextChar != '}') {
                             // Erro (Comentario nao fechado)
-                            error = CompilerError.instantiateError(CompilerError.INVALID_COMMENT_ERROR_CODE,
+                            error = CompilerError.instantiateError(CompilerError.INVALID_COMMENT_ERROR,
                                     commentLine, commentCol);
                             break;
                         }
@@ -178,7 +178,7 @@ public class Lexical extends Algorithm {
                                         Symbols.SDIF, lineNumber, colNumber);
                                 nextChar = readNextChar(reader);
                             } else {
-                                error = CompilerError.instantiateError(CompilerError.INVALID_SYMBOL_ERROR_CODE,
+                                error = CompilerError.instantiateError(CompilerError.INVALID_SYMBOL_ERROR,
                                         lineNumber, (colNumber-1));
                                 break;
                             }
@@ -201,7 +201,7 @@ public class Lexical extends Algorithm {
                         nextChar = readNextChar(reader);
 
                     } else {
-                        error = CompilerError.instantiateError(CompilerError.INVALID_CHAR_ERROR_CODE,
+                        error = CompilerError.instantiateError(CompilerError.INVALID_CHAR_ERROR,
                                 lineNumber, (colNumber-1));
                         break;
                     }

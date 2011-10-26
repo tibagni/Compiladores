@@ -1,14 +1,14 @@
 package comp.app.error;
 
 public class CompilerError {
-    public static final int NONE_ERROR_CODE                 = 0;
-    public static final int UNKNOWN_ERROR_CODE              = -1;
+    public static final int NONE_ERROR                      = 0;
+    public static final int UNKNOWN_ERROR                   = -1;
     public static final int NOT_INITIALIZED                 = -2;
 
     // LEXICAL
-    public static final int INVALID_CHAR_ERROR_CODE         = 1;
-    public static final int INVALID_SYMBOL_ERROR_CODE       = 2;
-    public static final int INVALID_COMMENT_ERROR_CODE      = 3;
+    public static final int INVALID_CHAR_ERROR              = 1;
+    public static final int INVALID_SYMBOL_ERROR            = 2;
+    public static final int INVALID_COMMENT_ERROR           = 3;
 
     // SINTATICO
     public static final int INVALID_PROGRAM_START           = 4;  // Se o programa nao comeca com a palavra 'programa'
@@ -84,27 +84,27 @@ public class CompilerError {
      * @return Instancia sem erro
      */
     public static CompilerError NONE() {
-        return instantiateError(NONE_ERROR_CODE, 0, 0);
+        return instantiateError(NONE_ERROR, 0, 0);
     }
 
     private static String buildErrorMessage(int errorCode, int lineNumber, int colNumber) {
         switch (errorCode) {
-            case NONE_ERROR_CODE:
+            case NONE_ERROR:
                 return "Sem erros";
 
             case INVALID_FILE_ERROR:
                 return "Problemas ao ler arquivo!";
 
             /* Erros identificados na analise lexical *************************************/
-            case INVALID_CHAR_ERROR_CODE:
+            case INVALID_CHAR_ERROR:
                 return "Caracter inválido - linha: "
                 + lineNumber + " coluna: " + colNumber;
 
-            case INVALID_SYMBOL_ERROR_CODE:
+            case INVALID_SYMBOL_ERROR:
                 return "Símbolo não existe - linha: "
                 + lineNumber + " coluna: " + colNumber;
 
-            case INVALID_COMMENT_ERROR_CODE:
+            case INVALID_COMMENT_ERROR:
                 return "Comentário inválido (sem fechamento) - linha: "
                 + lineNumber + " coluna: " + colNumber;
 
@@ -151,7 +151,8 @@ public class CompilerError {
                 lineNumber + " coluna: " + colNumber;
 
             case ILLEGAL_CMD_BLOCK_DECLARATION:
-                return "Bloco de comando incorreto ('inicio' faltando) - linha: " +
+                return "Bloco de comando incorreto (verifique se o bloco inicia com " +
+                		"'inicio' e termina com 'fim') - linha: " +
                 lineNumber + " coluna: " + colNumber;
 
             case OPEN_PARENTHESIS_EXPECTED:
@@ -186,7 +187,7 @@ public class CompilerError {
 
 
             /* Erro desconhecido **********************************************/
-            case UNKNOWN_ERROR_CODE:
+            case UNKNOWN_ERROR:
                 return "Erro desconhecido - linha: "
                 + lineNumber + " cluna: " + colNumber;
         }

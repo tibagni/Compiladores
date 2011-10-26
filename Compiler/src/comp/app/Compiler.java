@@ -14,9 +14,11 @@ public class Compiler {
 
     private Object lex = new Object();
     private CompilerError mLexicalOutput = CompilerError.instantiateError(CompilerError.NOT_INITIALIZED, 0, 0);
+    private Object mLexicalOutputLock = new Object();
 
     private Object compilation = new Object();
     private CompilerError mOutput = CompilerError.instantiateError(CompilerError.NOT_INITIALIZED, 0, 0);
+    private Object mOutputLock = new Object();
 
     private Thread mLexicalThread;
     private Thread mCompilingThread;
@@ -66,7 +68,7 @@ public class Compiler {
          * 1 - Erro lexico
          * 2 - Erro na segunda thread
          */
-        if (getLexicalOutput().getErrorCode() != CompilerError.NONE_ERROR_CODE) {
+        if (getLexicalOutput().getErrorCode() != CompilerError.NONE_ERROR) {
             // TODO informa erro ao usuario e a outra thread para que sua execucao seja cnacelada
             mCompilingThread.interrupt();
             System.out.println(getLexicalOutput().getErrorMessage());
@@ -83,7 +85,7 @@ public class Compiler {
             }
 
             // Checa erros do restante da compilacao (Sintatico e semantico)
-            if (getOutput().getErrorCode() != CompilerError.NONE_ERROR_CODE) {
+            if (getOutput().getErrorCode() != CompilerError.NONE_ERROR) {
                 // TODO informa erro
                 System.out.println(getOutput().getErrorMessage());
             } else {
@@ -94,25 +96,25 @@ public class Compiler {
     }
 
     private void setLexicalOutput(CompilerError error) {
-        synchronized(mLexicalOutput) {
+        synchronized(mLexicalOutputLock) {
             mLexicalOutput = error;
         }
     }
 
     private CompilerError getLexicalOutput() {
-        synchronized(mLexicalOutput) {
+        synchronized(mLexicalOutputLock) {
             return mLexicalOutput;
         }
     }
 
     private void setOutput(CompilerError error) {
-        synchronized(mOutput) {
+        synchronized(mOutputLock) {
             mOutput = error;
         }
     }
 
     private CompilerError getOutput() {
-        synchronized(mOutput) {
+        synchronized(mOutputLock) {
             return mOutput;
         }
     }
