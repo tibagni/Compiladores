@@ -90,7 +90,7 @@ public class CompilerError {
     private static String buildErrorMessage(int errorCode, int lineNumber, int colNumber) {
         switch (errorCode) {
             case NONE_ERROR:
-                return "Sem erros";
+                return "Compilação finalizada com sucesso!!";
 
             case INVALID_FILE_ERROR:
                 return "Problemas ao ler arquivo!";

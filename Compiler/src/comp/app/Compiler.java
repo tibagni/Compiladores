@@ -3,6 +3,7 @@ package comp.app;
 import java.io.File;
 import java.io.IOException;
 
+import comp.app.GUI.CompilerGUI;
 import comp.app.alg.Lexical;
 import comp.app.alg.Syntactic;
 import comp.app.alg.Tokens;
@@ -26,23 +27,25 @@ public class Compiler {
     /**
      * @param args
      */
-    public static void main(String[] args) {
-        String fileName = args[0];
-        File f = new File(fileName);
-
-        // Limpa todos os arquivos de log
-        C_Log.clearLogFiles();
-
-        if (f != null && f.exists()) {
-            new Compiler(f).compile();
-        }
-    }
+//    public static void main(String[] args) {
+//        String fileName = args[0];
+//        File f = new File(fileName);
+//
+//        compilerInterface = new CompilerGUI();
+//        
+//        // Limpa todos os arquivos de log
+//        C_Log.clearLogFiles();
+//
+//        if (f != null && f.exists()) {
+//            new Compiler(f).compile();
+//        }
+//    }
 
     public Compiler(File sourceFile) {
-        mSourceFile = sourceFile;
+    	mSourceFile = sourceFile;
     }
 
-    public void compile() {
+    public CompilerError compile() {
         // Inicia as threds para a compilação
         mLexicalThread = new Thread(new LexicalThread(mSourceFile));
         mCompilingThread = new Thread(new CompilingThread());
@@ -72,6 +75,8 @@ public class Compiler {
             // TODO informa erro ao usuario e a outra thread para que sua execucao seja cnacelada
             mCompilingThread.interrupt();
             System.out.println(getLexicalOutput().getErrorMessage());
+            return getLexicalOutput();
+            
         } else {
             // Espera a segunda thread terminar para verificar o status da compilacao
             synchronized (compilation) {
@@ -88,9 +93,11 @@ public class Compiler {
             if (getOutput().getErrorCode() != CompilerError.NONE_ERROR) {
                 // TODO informa erro
                 System.out.println(getOutput().getErrorMessage());
+                return getOutput();
             } else {
                 // TODO compilacao concluida com sucesso
                 System.out.println("Sucesso!!");
+                return CompilerError.instantiateError(CompilerError.NONE_ERROR, 0, 0);
             }
         }
     }

@@ -26,6 +26,7 @@ public class Lexical extends Algorithm {
 
     public CompilerError execute(File file) throws IOException {
         BufferedReader reader;
+        mTokenList.clear();
 
         CompilerError error = CompilerError.NONE();
 

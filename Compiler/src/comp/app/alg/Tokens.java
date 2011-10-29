@@ -28,6 +28,10 @@ public class Tokens {
         mTokenBuffer = new LinkedBlockingQueue<Token>();
         mIsLexicalFinished = false;
     }
+    
+    public void clear() {
+    	mTokenBuffer.clear();
+    }
 
     /**
      * Adiciona token no buffer.

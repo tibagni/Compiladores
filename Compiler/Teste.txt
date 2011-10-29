@@ -4,7 +4,7 @@ var int:inteiro; b:booleano;
     n,i,j:inteiro; val: inteiro;
 
 funcao fat:inteiro;
-var v:inteiro;
+var v:nteiro;
 inicio
    se n <= 0 entao fat:=1
    senao inicio
