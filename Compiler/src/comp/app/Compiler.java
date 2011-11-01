@@ -3,7 +3,6 @@ package comp.app;
 import java.io.File;
 import java.io.IOException;
 
-import comp.app.GUI.CompilerGUI;
 import comp.app.alg.Lexical;
 import comp.app.alg.Syntactic;
 import comp.app.alg.Tokens;
@@ -32,7 +31,7 @@ public class Compiler {
 //        File f = new File(fileName);
 //
 //        compilerInterface = new CompilerGUI();
-//        
+//
 //        // Limpa todos os arquivos de log
 //        C_Log.clearLogFiles();
 //
@@ -76,7 +75,7 @@ public class Compiler {
             mCompilingThread.interrupt();
             System.out.println(getLexicalOutput().getErrorMessage());
             return getLexicalOutput();
-            
+
         } else {
             // Espera a segunda thread terminar para verificar o status da compilacao
             synchronized (compilation) {

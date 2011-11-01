@@ -2,6 +2,7 @@
 bin/
 target
 gen/
+*.class
 .metadata
 tmp/**
 .DS_Store
@@ -27,3 +28,4 @@ target
 *.properties
 *.cfg
 .project
+*.log

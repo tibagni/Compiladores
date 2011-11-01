@@ -1,11 +1,5 @@
 package comp.app.GUI;
 
-import comp.app.Compiler;
-import comp.app.error.CompilerError;
-import comp.app.log.C_Log;
-import comp.app.utils.Icones;
-import comp.app.utils.MyFileChooser;
-
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Font;
@@ -16,6 +10,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Scanner;
+
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -27,12 +22,20 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
+import javax.swing.SwingUtilities;
+import javax.swing.border.Border;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultHighlighter;
 import javax.swing.text.Element;
 import javax.swing.text.Highlighter;
+
+import comp.app.Compiler;
+import comp.app.error.CompilerError;
+import comp.app.log.C_Log;
+import comp.app.utils.Icons;
+import comp.app.utils.MyFileChooser;
 
 /**
  *
@@ -59,7 +62,7 @@ public class CompilerGUI extends JFrame {
 	/*
 	 * Código Fonte
 	 */
-	private File fonteFile = null;
+	private File sourceCodeFile = null;
 
 	/*
 	 * Padronização dos botões do JOptionPane
@@ -69,7 +72,7 @@ public class CompilerGUI extends JFrame {
 	/*
 	 * JtextArea do codigo fonte
 	 */
-	private JTextArea areaFonte;
+	private JTextArea sourceCodeArea;
 
 	/*
 	 * JTextArea utilizado para a contagem de linhas
@@ -91,6 +94,7 @@ public class CompilerGUI extends JFrame {
 	 * MenuBar contendo os botoes de novo, abrir, salvar e compilar
 	 */
 	private JMenuBar menu;
+
 	private JButton open;
 	private JButton compile;
 	private JButton save;
@@ -99,7 +103,7 @@ public class CompilerGUI extends JFrame {
 	/*
 	 * Paineis do codigo fonte e dos erros
 	 */
-	private JPanel painelFonte;
+	private JPanel sourceCodePanel;
 	private JPanel painelErros;
 
 	/*
@@ -117,52 +121,61 @@ public class CompilerGUI extends JFrame {
 	 */
 	private Compiler compiler;
 
+	private static final String NEW_FILE_NAME = "Novo.Txt";
+
 	public CompilerGUI() {
-		// TODO arrumar titulo e colocar uma imagem bunitinha =D
-		super("Teste");
-		createMenu();
-		createGUI();
-		pack();
-		config();
+	    this(null);
+	}
+
+	public CompilerGUI(File f) {
+        super("Título");
+
+
+        if (f != null) {
+            sourceCodeFile = f;
+        }
+
+        createMenu();
+        createGUI();
+        pack();
+        config();
 	}
 
 	private void createMenu() {
+	    final Color bgColor = Color.WHITE;
 
 		// Botão abrir
 		open = new JButton(new ActionOpen());
 		open.setBorderPainted(false);
-		open.setIcon(Icones.getIcon(Icones.OPEN_ICON));
+		open.setIcon(Icons.getIcon(Icons.OPEN_ICON));
 		open.setToolTipText("Abrir código fonte");
-		open.setBackground(Color.CYAN);
 
 		// Botão novoArquivo
 		newFile = new JButton(new ActionNewFile());
 		newFile.setBorderPainted(false);
-		newFile.setIcon(Icones.getIcon(Icones.NEW_ICON));
+        newFile.setIcon(Icons.getIcon(Icons.NEW_ICON));
 		newFile.setToolTipText("Criar novo códdigo fonte");
-		newFile.setBackground(Color.CYAN);
 
 		// Botão salvar
 		save = new JButton(new ActionSave());
 		save.setBorderPainted(false);
-		save.setIcon(Icones.getIcon(Icones.SAVE_ICON));
+        save.setIcon(Icons.getIcon(Icons.SAVE_ICON));
 		save.setToolTipText("Salvar códdigo fonte");
-		save.setBackground(Color.CYAN);
 
 		// Botão compilar
 		compile = new JButton(new ActionCompile());
 		compile.setBorderPainted(false);
-		compile.setIcon(Icones.getIcon(Icones.COMPILE_ICON));
+        compile.setIcon(Icons.getIcon(Icons.COMPILE_ICON));
 		compile.setToolTipText("Compilar código fonte");
-		compile.setBackground(Color.CYAN);
 		compile.setEnabled(false);
 
 		// Label com nome do arquivo
-		fileName = new JLabel("                    " + "Novo.txt");
+		fileName = new JLabel(NEW_FILE_NAME);
+		Border padding = BorderFactory.createEmptyBorder(0, 10, 0, 10);
+		fileName.setBorder(padding);
 
 		// MenuBar
 		menu = new JMenuBar();
-		menu.setBackground(Color.CYAN);
 
 		menu.add(newFile);
 		menu.add(open);
@@ -170,7 +183,13 @@ public class CompilerGUI extends JFrame {
 		menu.add(compile);
 		menu.add(fileName);
 
-		setJMenuBar(menu);                
+		menu.setBackground(bgColor);
+        compile.setBackground(bgColor);
+        save.setBackground(bgColor);
+        newFile.setBackground(bgColor);
+        open.setBackground(bgColor);
+
+		setJMenuBar(menu);
 
 	}
 
@@ -179,24 +198,24 @@ public class CompilerGUI extends JFrame {
 		/*
 		 * Painel de escrita do codigo fonte e linhas ======================================
 		 */
-		painelFonte = new JPanel();
+		sourceCodePanel = new JPanel();
 
-		areaFonte = new JTextArea(32,112);        
-		areaFonte.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 13));
+		sourceCodeArea = new JTextArea(32,112);
+		sourceCodeArea.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 13));
 
-		highlighter = areaFonte.getHighlighter();
+		highlighter = sourceCodeArea.getHighlighter();
 
 		scroll = new JScrollPane();
 
-		lineNumber = new JTextArea("1");        
+		lineNumber = new JTextArea("1");
 		lineNumber.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 13));
 		lineNumber.setBackground(Color.LIGHT_GRAY);
 		lineNumber.setEditable(false);
 
-		areaFonte.getDocument().addDocumentListener(new DocumentListener(){
+		sourceCodeArea.getDocument().addDocumentListener(new DocumentListener(){
 			public String getText(){
-				int caretPosition = areaFonte.getDocument().getLength();
-				Element root = areaFonte.getDocument().getDefaultRootElement();
+				int caretPosition = sourceCodeArea.getDocument().getLength();
+				Element root = sourceCodeArea.getDocument().getDefaultRootElement();
 				String text = "1" + System.getProperty("line.separator");
 				for(int i = 2; i < root.getElementIndex( caretPosition ) + 2; i++){
 					text += i + System.getProperty("line.separator");
@@ -228,13 +247,13 @@ public class CompilerGUI extends JFrame {
 			}
 
 		});
-		scroll.getViewport().add(areaFonte);
+		scroll.getViewport().add(sourceCodeArea);
 		scroll.setRowHeaderView(lineNumber);
 		scroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 
-		painelFonte.add(scroll);
-		painelFonte.validate();
-		getContentPane().add(painelFonte, BorderLayout.CENTER);
+		sourceCodePanel.add(scroll);
+		sourceCodePanel.validate();
+		getContentPane().add(sourceCodePanel, BorderLayout.CENTER);
 
 		/*
 		 * Painel dos erros ====================================================================
@@ -260,7 +279,6 @@ public class CompilerGUI extends JFrame {
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
 		setLocationRelativeTo(null);
 		setExtendedState(MAXIMIZED_BOTH);
-		setVisible(true);
 	}
 
 	/*
@@ -272,7 +290,7 @@ public class CompilerGUI extends JFrame {
 		 * Se fonteFile for null quer dizer que nao existe nenhum outro arquivo aberto
 		 * entao o fileChooser é aberto para que se possa encolher onde salvar o arquivo
 		 */
-		if (fonteFile == null) {
+		if (sourceCodeFile == null) {
 			fileChooser.setDialogTitle("Salvar");
 			int resp = fileChooser.showSaveDialog(null);
 
@@ -281,19 +299,19 @@ public class CompilerGUI extends JFrame {
 			} else {
 				// Crio o arquivo com o nome escolhido no fileChooser e adiciono o .txt caso necessario
 				if(!fileChooser.getSelectedFile().getAbsolutePath().endsWith(".txt")) {
-					fonteFile = new File(fileChooser.getSelectedFile().getAbsolutePath() + ".txt");
+					sourceCodeFile = new File(fileChooser.getSelectedFile().getAbsolutePath() + ".txt");
 				} else {
-					fonteFile = new File(fileChooser.getSelectedFile().getAbsolutePath());
+					sourceCodeFile = new File(fileChooser.getSelectedFile().getAbsolutePath());
 				}
 				// Verifico se o arquivo já existe no diretório e pergunto se quer sobreescrevê-lo
-				if(fonteFile.exists()) {
+				if(sourceCodeFile.exists()) {
 					int res = JOptionPane.showOptionDialog(null,
 							"Este arquivo já existe! Deseja sobreescrevê-lo?",
 							"Atenção!", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE,
 							null, opt, opt[0]);
 
 					if(res == JOptionPane.NO_OPTION) {
-						fonteFile = null;
+						sourceCodeFile = null;
 						salvarFonte();
 					}
 				}
@@ -302,8 +320,8 @@ public class CompilerGUI extends JFrame {
 
 		// Escrevo no arquivo e seto arquivoSalvo
 		try{
-			FileOutputStream out = new FileOutputStream(fonteFile);
-			out.write(areaFonte.getText().getBytes());
+			FileOutputStream out = new FileOutputStream(sourceCodeFile);
+			out.write(sourceCodeArea.getText().getBytes());
 			saved = true;
 
 		} catch (FileNotFoundException ex) {
@@ -319,7 +337,9 @@ public class CompilerGUI extends JFrame {
 	 */
 	private class ActionOpen extends AbstractAction implements ActionListener {
 
-		@Override
+        private static final long serialVersionUID = 1L;
+
+        @Override
 		public void actionPerformed(ActionEvent e) {
 			// Caso o arquivo não esteja salvo, pergunto antes de fecha-lo
 			if(!saved) {
@@ -334,7 +354,7 @@ public class CompilerGUI extends JFrame {
 			}
 
 			// Faço a leitura do arquivo
-			areaFonte.setText("");
+			sourceCodeArea.setText("");
 			Scanner reader = null;
 
 			fileChooser.setDialogTitle("Abrir");
@@ -342,22 +362,22 @@ public class CompilerGUI extends JFrame {
 			if(resp == JFileChooser.CANCEL_OPTION) {
 				return;
 			}
-			fonteFile = fileChooser.getSelectedFile();
+			sourceCodeFile = fileChooser.getSelectedFile();
 
 			try {
-				reader = new Scanner(fonteFile);
+				reader = new Scanner(sourceCodeFile);
 
 			} catch (FileNotFoundException ex) {
 				JOptionPane.showMessageDialog(null, "Erro", "Arquivo inexistente", JOptionPane.ERROR_MESSAGE);
 			}
 			while(reader.hasNextLine()){
-				areaFonte.append(reader.nextLine() + "\n");
+				sourceCodeArea.append(reader.nextLine() + "\n");
 			}
 
 			// Como o arquivo acabou de ser aberto, seto-o como salvo
 			// Atualizo o label do nome do arquivo
 			saved = true;
-			fileName.setText("                    " + fonteFile.getName());
+			fileName.setText(sourceCodeFile.getName());
 			errors.setText("");
 		}
 	}
@@ -367,7 +387,9 @@ public class CompilerGUI extends JFrame {
 	 */
 	private class ActionCompile extends AbstractAction implements ActionListener {
 
-		@Override
+        private static final long serialVersionUID = 1L;
+
+        @Override
 		public void actionPerformed(ActionEvent e) {
 			// Salvo o fonte antes de compilar caso ele nao esteja salvo e faço a compilação
 			CompilerError erro;
@@ -375,7 +397,7 @@ public class CompilerGUI extends JFrame {
 				salvarFonte();
 			}
 
-			compiler = new Compiler(fonteFile);
+			compiler = new Compiler(sourceCodeFile);
 			erro = compiler.compile();
 			setErrorMessage(erro);
 		}
@@ -386,7 +408,9 @@ public class CompilerGUI extends JFrame {
 	 */
 	private class ActionNewFile extends AbstractAction implements ActionListener {
 
-		@Override
+        private static final long serialVersionUID = 1L;
+
+        @Override
 		public void actionPerformed(ActionEvent e) {
 			/*
 			 * Caso haja outro arquivo aberto, pergunto se quer salvá-lo
@@ -402,9 +426,9 @@ public class CompilerGUI extends JFrame {
 			// Atualizo o label e seto o fonteFile para null para quando for salvar abrir
 			// o fileChooser
 			compile.setEnabled(false);
-			areaFonte.setText("");
-			fileName.setText("                    " + "Novo.txt");
-			fonteFile = null;
+			sourceCodeArea.setText("");
+			fileName.setText(NEW_FILE_NAME);
+			sourceCodeFile = null;
 			errors.setText("");
 		}
 	}
@@ -412,10 +436,12 @@ public class CompilerGUI extends JFrame {
 	/*
 	 *  Classe responsável pelo action do botão Salvar
 	 */
-	private class ActionSave extends AbstractAction implements ActionListener {        
+	private class ActionSave extends AbstractAction implements ActionListener {
 
-		@Override
-		public void actionPerformed(ActionEvent e) {            
+        private static final long serialVersionUID = 1L;
+
+        @Override
+		public void actionPerformed(ActionEvent e) {
 			salvarFonte();
 		}
 	}
@@ -429,13 +455,13 @@ public class CompilerGUI extends JFrame {
 		try {
 			int lineOffset = erro.getLineNumber()-1;
 
-			highlighter.addHighlight(areaFonte.getLineStartOffset(lineOffset),
-					areaFonte.getLineEndOffset(lineOffset), 
+			highlighter.addHighlight(sourceCodeArea.getLineStartOffset(lineOffset),
+					sourceCodeArea.getLineEndOffset(lineOffset),
 					new MyHighlighter(Color.RED));
 
-			areaFonte.requestFocus();
+			sourceCodeArea.requestFocus();
 			// Mudo a posição do cursor para a linha do erro.
-			areaFonte.setCaretPosition(areaFonte.getLineEndOffset(lineOffset)-1);
+			sourceCodeArea.setCaretPosition(sourceCodeArea.getLineEndOffset(lineOffset)-1);
 		} catch (BadLocationException e) {
 			return;
 		}
@@ -456,13 +482,32 @@ public class CompilerGUI extends JFrame {
 	}
 
 	public static void main(String[] args) {
-		//        String fileName = args[0];
-		//        File f = new File(fileName);
+        final String fileName;
+        final File file;
 
-		// Limpa todos os arquivos de log
+	    if (args.length > 0) {
+	        fileName = args[0];
+	        file = new File(fileName);
+	    } else {
+	        fileName = null;
+	        file = null;
+	    }
+		// Antes de tudo
+	    // Limpa todos os arquivos de log
 		C_Log.clearLogFiles();
 
-		new CompilerGUI();
+		SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                CompilerGUI ide;
+                if (file != null) {
+                    ide = new CompilerGUI(file);
+                } else {
+                    ide = new CompilerGUI();
+                }
+                ide.setVisible(true);
+            }
+        });
 
 
 
