@@ -123,6 +123,9 @@ public class CompilerGUI extends JFrame implements UIListener {
 	private Compiler compiler;
 
 	private static final String NEW_FILE_NAME = "NovoArquivo.lpd";
+	private static final String LPD_FILE_EXTENSION = ".lpd";
+
+	private boolean mIsCompiling = false;
 
 	public CompilerGUI() {
 	    this(null);
@@ -139,11 +142,7 @@ public class CompilerGUI extends JFrame implements UIListener {
 
         if (f != null) {
             sourceCodeFile = f;
-            Scanner reader = null;
-            try {
-                reader = new Scanner(sourceCodeFile);
-            } catch (FileNotFoundException ex) { }
-            setFile(reader);
+            setFile();
         }
 	}
 
@@ -225,11 +224,11 @@ public class CompilerGUI extends JFrame implements UIListener {
 			public String getText(){
 				int caretPosition = sourceCodeArea.getDocument().getLength();
 				Element root = sourceCodeArea.getDocument().getDefaultRootElement();
-				String text = "1" + System.getProperty("line.separator");
+				StringBuffer text = new StringBuffer("1" + System.getProperty("line.separator"));
 				for(int i = 2; i < root.getElementIndex( caretPosition ) + 2; i++){
-					text += i + System.getProperty("line.separator");
+					text.append(i + System.getProperty("line.separator"));
 				}
-				return text;
+				return text.toString();
 			}
 			@Override
 			public void changedUpdate(DocumentEvent de) {
@@ -306,9 +305,9 @@ public class CompilerGUI extends JFrame implements UIListener {
 			if(resp == MyFileChooser.CANCEL_OPTION) {
 				return;
 			} else {
-				// Crio o arquivo com o nome escolhido no fileChooser e adiciono o .txt caso necessario
-				if(!fileChooser.getSelectedFile().getAbsolutePath().endsWith(".txt")) {
-					sourceCodeFile = new File(fileChooser.getSelectedFile().getAbsolutePath() + ".txt");
+				// Crio o arquivo com o nome escolhido no fileChooser e adiciono a extensao caso necessario
+				if(!fileChooser.getSelectedFile().getAbsolutePath().endsWith(LPD_FILE_EXTENSION)) {
+					sourceCodeFile = new File(fileChooser.getSelectedFile().getAbsolutePath() + LPD_FILE_EXTENSION);
 				} else {
 					sourceCodeFile = new File(fileChooser.getSelectedFile().getAbsolutePath());
 				}
@@ -328,17 +327,24 @@ public class CompilerGUI extends JFrame implements UIListener {
 		}
 
 		// Escrevo no arquivo e seto arquivoSalvo
+        FileOutputStream out = null;
 		try{
-			FileOutputStream out = new FileOutputStream(sourceCodeFile);
+		    out = new FileOutputStream(sourceCodeFile);
 			out.write(sourceCodeArea.getText().getBytes());
 			saved = true;
-
 		} catch (FileNotFoundException ex) {
 			ex.printStackTrace();
 		} catch (IOException ex) {
 			ex.printStackTrace();
 		}
 
+		if (out != null) {
+		    try {
+                out.close();
+            } catch (IOException e) {
+                C_Log.error("Erro ao tentar fechar stream", e);
+            }
+		}
 	}
 
 	/*
@@ -377,14 +383,24 @@ public class CompilerGUI extends JFrame implements UIListener {
 				reader = new Scanner(sourceCodeFile);
 			} catch (FileNotFoundException ex) {
 				JOptionPane.showMessageDialog(null, "Erro", "Arquivo inexistente", JOptionPane.ERROR_MESSAGE);
+				return;
 			}
 
-			setFile(reader);
+			reader.close();
+
+			setFile();
 		}
 	}
 
-	private void setFile(Scanner fileReader) {
-        if (fileReader != null) {
+	private void setFile() {
+        if (sourceCodeFile != null) {
+            Scanner fileReader;
+            try {
+                fileReader = new Scanner(sourceCodeFile);
+            } catch (FileNotFoundException e) {
+                C_Log.error("Arquivo nao encontrado", e);
+                return;
+            }
             while (fileReader.hasNextLine()) {
                 sourceCodeArea.append(fileReader.nextLine() + "\n");
             }
@@ -396,6 +412,7 @@ public class CompilerGUI extends JFrame implements UIListener {
             setTitle(sourceCodeFile.getName());
             errors.setText("");
             sourceCodeArea.setCaretPosition(0);
+            fileReader.close();
 	    }
 	}
 
@@ -408,6 +425,13 @@ public class CompilerGUI extends JFrame implements UIListener {
 
         @Override
 		public void actionPerformed(ActionEvent e) {
+            // Nao tenta compilar se ja houver uma compilacão rodando
+            if (mIsCompiling) {
+                return;
+            }
+
+            setCompilerRunning(true);
+
 			// Salvo o fonte antes de compilar caso ele nao esteja salvo e faço a compilação
 			if (!saved) {
 				salvarFonte();
@@ -466,7 +490,7 @@ public class CompilerGUI extends JFrame implements UIListener {
 	 * Quando ocorre um erro, a linha é sublinhada de azul
 	 * para indicar onde o erro ocorreu
 	 */
-	public void setLineHighlighter(CompilerError erro) {
+	private void setLineHighlighter(CompilerError erro) {
 
 		try {
 			int lineOffset = erro.getLineNumber()-1;
@@ -479,15 +503,27 @@ public class CompilerGUI extends JFrame implements UIListener {
 			// Mudo a posição do cursor para a linha do erro.
 			sourceCodeArea.setCaretPosition(sourceCodeArea.getLineEndOffset(lineOffset)-1);
 		} catch (BadLocationException e) {
+		    C_Log.error("Nao foi possivel sublinhar linha", e);
 			return;
 		}
 
 	}
 
+	private void setCompilerRunning(boolean isCompiling) {
+	    if (isCompiling) {
+	        compile.setIcon(Icons.getIcon(Icons.LOADING_ICON));
+	        compile.setFocusable(false);
+	    } else {
+	        compile.setIcon(Icons.getIcon(Icons.COMPILE_ICON));
+	        compile.setFocusable(true);
+	    }
+	    mIsCompiling = isCompiling;
+	}
+
 	/*
 	 * Seta no textArea de erros qual erro aconteceu durante a copilação
 	 */
-	public void setErrorMessage(CompilerError error) {
+	private void setErrorMessage(CompilerError error) {
 		if(error.getErrorCode() == CompilerError.NONE_ERROR) {
 			errors.setForeground(Color.GREEN);
 		} else {
@@ -529,7 +565,7 @@ public class CompilerGUI extends JFrame implements UIListener {
 	/*
 	 * Classe utilizada para mudar a cor do highlighter
 	 */
-	public class MyHighlighter extends DefaultHighlighter.DefaultHighlightPainter {
+	private class MyHighlighter extends DefaultHighlighter.DefaultHighlightPainter {
 		public MyHighlighter(Color c) {
 			super(c);
 		}
@@ -538,5 +574,6 @@ public class CompilerGUI extends JFrame implements UIListener {
     @Override
     public void onCompilationFinished(CompilerError result) {
         setErrorMessage(result);
+        setCompilerRunning(false);
     }
 }
