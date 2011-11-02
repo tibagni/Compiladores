@@ -5,6 +5,8 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -285,6 +287,7 @@ public class CompilerGUI extends JFrame implements UIListener {
 	 */
 	private  void config() {
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
+		addWindowListener(new ActionClose());
 		setLocationRelativeTo(null);
 		setExtendedState(MAXIMIZED_BOTH);
 	}
@@ -349,6 +352,20 @@ public class CompilerGUI extends JFrame implements UIListener {
 		}
 	}
 
+	private class ActionClose extends WindowAdapter {
+		public void windowClosing(WindowEvent e){
+			if(!saved){
+				int res = JOptionPane.showOptionDialog(null,
+						"Deseja salvar o arquivo antes de sair?",
+						"Atenção!", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE,
+						null, opt, opt[0]);
+
+				if(res == JOptionPane.YES_OPTION) {
+					salvarFonte();
+				}
+			}
+		}
+	}
 	/*
 	 * Classe provada que faz o action do botao Abrir
 	 */
