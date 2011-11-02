@@ -303,7 +303,7 @@ public class CompilerGUI extends JFrame implements UIListener {
 			int resp = fileChooser.showSaveDialog(null);
 
 			if(resp == MyFileChooser.CANCEL_OPTION) {
-				return;
+				salvarFonte();
 			} else {
 				// Crio o arquivo com o nome escolhido no fileChooser e adiciono a extensao caso necessario
 				if(!fileChooser.getSelectedFile().getAbsolutePath().endsWith(LPD_FILE_EXTENSION)) {
@@ -311,6 +311,8 @@ public class CompilerGUI extends JFrame implements UIListener {
 				} else {
 					sourceCodeFile = new File(fileChooser.getSelectedFile().getAbsolutePath());
 				}
+				setTitle(sourceCodeFile.getName());
+				fileName.setText(sourceCodeFile.getName());
 				// Verifico se o arquivo já existe no diretório e pergunto se quer sobreescrevê-lo
 				if(sourceCodeFile.exists()) {
 					int res = JOptionPane.showOptionDialog(null,
@@ -411,7 +413,7 @@ public class CompilerGUI extends JFrame implements UIListener {
             fileName.setText(sourceCodeFile.getName());
             setTitle(sourceCodeFile.getName());
             errors.setText("");
-            sourceCodeArea.setCaretPosition(0);
+            //sourceCodeArea.setCaretPosition(0);
             fileReader.close();
 	    }
 	}
@@ -430,12 +432,11 @@ public class CompilerGUI extends JFrame implements UIListener {
                 return;
             }
 
-            setCompilerRunning(true);
-
 			// Salvo o fonte antes de compilar caso ele nao esteja salvo e faço a compilação
 			if (!saved) {
 				salvarFonte();
 			}
+			setCompilerRunning(true);
 
 			compiler = new Compiler(sourceCodeFile, CompilerGUI.this);
 			compiler.start();
@@ -493,7 +494,12 @@ public class CompilerGUI extends JFrame implements UIListener {
 	private void setLineHighlighter(CompilerError erro) {
 
 		try {
-			int lineOffset = erro.getLineNumber()-1;
+			int lineOffset;
+			if(erro.getErrorCode() == CompilerError.INVALID_PROGRAM_START) {
+				lineOffset = erro.getLineNumber();
+			} else {
+				lineOffset = erro.getLineNumber()-1;
+			}
 
 			highlighter.addHighlight(sourceCodeArea.getLineStartOffset(lineOffset),
 					sourceCodeArea.getLineEndOffset(lineOffset),
