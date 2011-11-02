@@ -32,6 +32,7 @@ import javax.swing.text.Element;
 import javax.swing.text.Highlighter;
 
 import comp.app.Compiler;
+import comp.app.Compiler.UIListener;
 import comp.app.error.CompilerError;
 import comp.app.log.C_Log;
 import comp.app.utils.Icons;
@@ -42,7 +43,7 @@ import comp.app.utils.MyFileChooser;
  * @author Felps
  * Classe responsável pela criação da interface gráfica do compilador
  */
-public class CompilerGUI extends JFrame {
+public class CompilerGUI extends JFrame implements UIListener {
 
 	/**
 	 * Não sei pra que diabos o eclipse manda colocar isso!!!
@@ -57,7 +58,7 @@ public class CompilerGUI extends JFrame {
 	/*
 	 * FileChooser customizado
 	 */
-	private JFileChooser fileChooser = MyFileChooser.getFileChooser();;
+	private JFileChooser fileChooser = MyFileChooser.getFileChooser();
 
 	/*
 	 * Código Fonte
@@ -121,24 +122,29 @@ public class CompilerGUI extends JFrame {
 	 */
 	private Compiler compiler;
 
-	private static final String NEW_FILE_NAME = "Novo.Txt";
+	private static final String NEW_FILE_NAME = "NovoArquivo.lpd";
 
 	public CompilerGUI() {
 	    this(null);
 	}
 
 	public CompilerGUI(File f) {
-        super("Título");
+        super(NEW_FILE_NAME);
 
-
-        if (f != null) {
-            sourceCodeFile = f;
-        }
 
         createMenu();
         createGUI();
         pack();
         config();
+
+        if (f != null) {
+            sourceCodeFile = f;
+            Scanner reader = null;
+            try {
+                reader = new Scanner(sourceCodeFile);
+            } catch (FileNotFoundException ex) { }
+            setFile(reader);
+        }
 	}
 
 	private void createMenu() {
@@ -201,7 +207,9 @@ public class CompilerGUI extends JFrame {
 		sourceCodePanel = new JPanel();
 
 		sourceCodeArea = new JTextArea(32,112);
+        Border padding = BorderFactory.createEmptyBorder(0, 5, 0, 5);
 		sourceCodeArea.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 13));
+		sourceCodeArea.setBorder(padding);
 
 		highlighter = sourceCodeArea.getHighlighter();
 
@@ -211,6 +219,7 @@ public class CompilerGUI extends JFrame {
 		lineNumber.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 13));
 		lineNumber.setBackground(Color.LIGHT_GRAY);
 		lineNumber.setEditable(false);
+		lineNumber.setBorder(padding);
 
 		sourceCodeArea.getDocument().addDocumentListener(new DocumentListener(){
 			public String getText(){
@@ -366,20 +375,28 @@ public class CompilerGUI extends JFrame {
 
 			try {
 				reader = new Scanner(sourceCodeFile);
-
 			} catch (FileNotFoundException ex) {
 				JOptionPane.showMessageDialog(null, "Erro", "Arquivo inexistente", JOptionPane.ERROR_MESSAGE);
 			}
-			while(reader.hasNextLine()){
-				sourceCodeArea.append(reader.nextLine() + "\n");
-			}
 
-			// Como o arquivo acabou de ser aberto, seto-o como salvo
-			// Atualizo o label do nome do arquivo
-			saved = true;
-			fileName.setText(sourceCodeFile.getName());
-			errors.setText("");
+			setFile(reader);
 		}
+	}
+
+	private void setFile(Scanner fileReader) {
+        if (fileReader != null) {
+            while (fileReader.hasNextLine()) {
+                sourceCodeArea.append(fileReader.nextLine() + "\n");
+            }
+
+            // Como o arquivo acabou de ser aberto, seto-o como salvo
+            // Atualizo o label do nome do arquivo
+            saved = true;
+            fileName.setText(sourceCodeFile.getName());
+            setTitle(sourceCodeFile.getName());
+            errors.setText("");
+            sourceCodeArea.setCaretPosition(0);
+	    }
 	}
 
 	/*
@@ -392,14 +409,12 @@ public class CompilerGUI extends JFrame {
         @Override
 		public void actionPerformed(ActionEvent e) {
 			// Salvo o fonte antes de compilar caso ele nao esteja salvo e faço a compilação
-			CompilerError erro;
 			if (!saved) {
 				salvarFonte();
 			}
 
-			compiler = new Compiler(sourceCodeFile);
-			erro = compiler.compile();
-			setErrorMessage(erro);
+			compiler = new Compiler(sourceCodeFile, CompilerGUI.this);
+			compiler.start();
 		}
 	}
 
@@ -428,6 +443,7 @@ public class CompilerGUI extends JFrame {
 			compile.setEnabled(false);
 			sourceCodeArea.setText("");
 			fileName.setText(NEW_FILE_NAME);
+			setTitle(NEW_FILE_NAME);
 			sourceCodeFile = null;
 			errors.setText("");
 		}
@@ -471,14 +487,14 @@ public class CompilerGUI extends JFrame {
 	/*
 	 * Seta no textArea de erros qual erro aconteceu durante a copilação
 	 */
-	public void setErrorMessage(CompilerError erro) {
-		if(erro.getErrorCode() == CompilerError.NONE_ERROR) {
+	public void setErrorMessage(CompilerError error) {
+		if(error.getErrorCode() == CompilerError.NONE_ERROR) {
 			errors.setForeground(Color.GREEN);
 		} else {
-			setLineHighlighter(erro);
+			setLineHighlighter(error);
 			errors.setForeground(Color.RED);
 		}
-		errors.setText(erro.getErrorMessage());
+		errors.setText(error.getErrorMessage());
 	}
 
 	public static void main(String[] args) {
@@ -508,12 +524,6 @@ public class CompilerGUI extends JFrame {
                 ide.setVisible(true);
             }
         });
-
-
-
-		//        if (f != null && f.exists()) {
-		//            new Compiler(f).compile();
-		//        }
 	}
 
 	/*
@@ -524,4 +534,9 @@ public class CompilerGUI extends JFrame {
 			super(c);
 		}
 	}
+
+    @Override
+    public void onCompilationFinished(CompilerError result) {
+        setErrorMessage(result);
+    }
 }

@@ -3,13 +3,15 @@ package comp.app;
 import java.io.File;
 import java.io.IOException;
 
+import javax.swing.SwingUtilities;
+
 import comp.app.alg.Lexical;
 import comp.app.alg.Syntactic;
 import comp.app.alg.Tokens;
 import comp.app.error.CompilerError;
 import comp.app.log.C_Log;
 
-public class Compiler {
+public class Compiler extends Thread {
     private File mSourceFile;
 
     private Object lex = new Object();
@@ -23,31 +25,26 @@ public class Compiler {
     private Thread mLexicalThread;
     private Thread mCompilingThread;
 
-    /**
-     * @param args
-     */
-//    public static void main(String[] args) {
-//        String fileName = args[0];
-//        File f = new File(fileName);
-//
-//        compilerInterface = new CompilerGUI();
-//
-//        // Limpa todos os arquivos de log
-//        C_Log.clearLogFiles();
-//
-//        if (f != null && f.exists()) {
-//            new Compiler(f).compile();
-//        }
-//    }
+    private UIListener mListener;
 
-    public Compiler(File sourceFile) {
+    public Compiler(File sourceFile, UIListener listener) {
     	mSourceFile = sourceFile;
+    	mListener = listener;
+    	setName("CompilationThread");
     }
 
-    public CompilerError compile() {
+    @Override
+    public void run() {
+        compile();
+    }
+
+    private void compile() {
         // Inicia as threds para a compilação
         mLexicalThread = new Thread(new LexicalThread(mSourceFile));
         mCompilingThread = new Thread(new CompilingThread());
+
+        mLexicalThread.setName("LexicalThread");
+        mCompilingThread.setName("SyntacticSemanticThread");
 
         Tokens.getInstance().setConsumerThread(mCompilingThread);
 
@@ -71,10 +68,8 @@ public class Compiler {
          * 2 - Erro na segunda thread
          */
         if (getLexicalOutput().getErrorCode() != CompilerError.NONE_ERROR) {
-            // TODO informa erro ao usuario e a outra thread para que sua execucao seja cnacelada
             mCompilingThread.interrupt();
-            System.out.println(getLexicalOutput().getErrorMessage());
-            return getLexicalOutput();
+            notifyUIListener(getLexicalOutput());
 
         } else {
             // Espera a segunda thread terminar para verificar o status da compilacao
@@ -90,13 +85,9 @@ public class Compiler {
 
             // Checa erros do restante da compilacao (Sintatico e semantico)
             if (getOutput().getErrorCode() != CompilerError.NONE_ERROR) {
-                // TODO informa erro
-                System.out.println(getOutput().getErrorMessage());
-                return getOutput();
+                notifyUIListener(getOutput());
             } else {
-                // TODO compilacao concluida com sucesso
-                System.out.println("Sucesso!!");
-                return CompilerError.instantiateError(CompilerError.NONE_ERROR, 0, 0);
+                notifyUIListener(CompilerError.instantiateError(CompilerError.NONE_ERROR, 0, 0));
             }
         }
     }
@@ -123,6 +114,17 @@ public class Compiler {
         synchronized(mOutputLock) {
             return mOutput;
         }
+    }
+
+    private void notifyUIListener(final CompilerError result) {
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                if (mListener != null) {
+                    mListener.onCompilationFinished(result);
+                }
+            }
+        });
     }
 
     /*
@@ -170,5 +172,9 @@ public class Compiler {
                 compilation.notify();
             }
         }
+    }
+
+    public interface UIListener {
+        void onCompilationFinished(CompilerError result);
     }
 }
