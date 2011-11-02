@@ -33,7 +33,7 @@ public class CompilerError {
     public static final int UNEXPECTED_TOKEN                = 23;
 
     // SEMANTICO
-    public static final int DUPLICATED_VAR                  = 23;
+    public static final int DUPLICATED_VAR                  = 24;
 
     // Outros
     public static final int INVALID_FILE_ERROR              = 100;
