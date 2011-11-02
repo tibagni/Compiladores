@@ -30,6 +30,7 @@ public class CompilerError {
     public static final int MALFORMED_WHILE_CONSTRUCTION    = 20; // faltando 'faca'
     public static final int WRONG_READ_WRITE_ARGUMENT       = 21; // argumento nao eh identificador
     public static final int MALFORMED_EXPRESSION            = 22; // Expressao incorreta
+    public static final int UNEXPECTED_TOKEN                = 23;
 
     // SEMANTICO
     public static final int DUPLICATED_VAR                  = 23;
@@ -181,6 +182,10 @@ public class CompilerError {
 
             case MALFORMED_EXPRESSION:
                 return "Expressão mal formada - linha: " +
+                lineNumber;
+
+            case UNEXPECTED_TOKEN:
+                return "Token inesperado - linha: " +
                 lineNumber;
 
             /* Erros da analise semantica *************************************/

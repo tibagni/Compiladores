@@ -371,10 +371,22 @@ public class Syntactic extends Algorithm {
             mCurrentToken = mTokenList.getTokenFromBuffer();
         } else {
             // Se o token for null, setamos a linha e a coluna como '0' para evitar NullPointerException
-            int line = mCurrentToken == null ? 0 : mCurrentToken.getTokenLine();
-            int col  = mCurrentToken == null ? 0 : mCurrentToken.getTokenEndColumn();
-     		error = CompilerError.instantiateError(CompilerError.ILLEGAL_CMD_BLOCK_DECLARATION,
-            		line, col);
+            int line = 0;
+            int col  = 0;
+            int errorCode = CompilerError.ILLEGAL_CMD_BLOCK_DECLARATION;
+
+            // Vamos tentar avaliar melhor o erro aqui!
+            if (mCurrentToken != null) {
+                line = mCurrentToken.getTokenLine();
+                col = mCurrentToken.getTokenEndColumn();
+
+                if (mCurrentToken.getSymbol() == Symbols.SPONTO_VIRGULA ||
+                    mCurrentToken.getSymbol() == Symbols.SPONTO ||
+                    mCurrentToken.getSymbol() == Symbols.SDOISPONTOS) {
+                    errorCode = CompilerError.UNEXPECTED_TOKEN;
+                }
+            }
+     		error = CompilerError.instantiateError(errorCode, line, col);
         }
 
         return error;

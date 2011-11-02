@@ -3,6 +3,7 @@ package comp.app.GUI;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
@@ -103,6 +104,8 @@ public class CompilerGUI extends JFrame implements UIListener {
 	private JButton save;
 	private JButton newFile;
 
+	private JLabel compileProgress;
+
 	/*
 	 * Paineis do codigo fonte e dos erros
 	 */
@@ -178,10 +181,17 @@ public class CompilerGUI extends JFrame implements UIListener {
 		compile.setToolTipText("Compilar código fonte");
 		compile.setEnabled(false);
 
+		// Label com o icone de loading enquanto compila
+		compileProgress = new JLabel(Icons.getIcon(Icons.LOADING_ICON));
+        compileProgress.setVisible(false);
+        Insets cM = compile.getMargin(); // cM = CompileMargin
+        Border progressPadding = BorderFactory.createEmptyBorder(0, cM.left, 0, cM.right);
+        compileProgress.setBorder(progressPadding);
+
 		// Label com nome do arquivo
 		fileName = new JLabel(NEW_FILE_NAME);
-		Border padding = BorderFactory.createEmptyBorder(0, 10, 0, 10);
-		fileName.setBorder(padding);
+		Border fileNamepadding = BorderFactory.createEmptyBorder(0, 10, 0, 10);
+		fileName.setBorder(fileNamepadding);
 
 		// MenuBar
 		menu = new JMenuBar();
@@ -190,6 +200,7 @@ public class CompilerGUI extends JFrame implements UIListener {
 		menu.add(open);
 		menu.add(save);
 		menu.add(compile);
+		menu.add(compileProgress);
 		menu.add(fileName);
 
 		menu.setBackground(bgColor);
@@ -553,11 +564,11 @@ public class CompilerGUI extends JFrame implements UIListener {
 
 	private void setCompilerRunning(boolean isCompiling) {
 	    if (isCompiling) {
-	        compile.setIcon(Icons.getIcon(Icons.LOADING_ICON));
-	        compile.setFocusable(false);
+	        compile.setVisible(false);
+	        compileProgress.setVisible(true);
 	    } else {
-	        compile.setIcon(Icons.getIcon(Icons.COMPILE_ICON));
-	        compile.setFocusable(true);
+            compile.setVisible(true);
+            compileProgress.setVisible(false);
 	    }
 	    mIsCompiling = isCompiling;
 	}
