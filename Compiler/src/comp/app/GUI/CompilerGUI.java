@@ -129,6 +129,8 @@ public class CompilerGUI extends JFrame implements UIListener {
 
 	private boolean mIsCompiling = false;
 
+	private int mLineCount = 1;
+
 	public CompilerGUI() {
 	    this(null);
 	}
@@ -222,19 +224,26 @@ public class CompilerGUI extends JFrame implements UIListener {
 		lineNumber.setEditable(false);
 		lineNumber.setBorder(padding);
 
-		sourceCodeArea.getDocument().addDocumentListener(new DocumentListener(){
-			public String getText(){
+		sourceCodeArea.getDocument().addDocumentListener(new DocumentListener() {
+
+			public String getText() {
 				int caretPosition = sourceCodeArea.getDocument().getLength();
 				Element root = sourceCodeArea.getDocument().getDefaultRootElement();
 				StringBuffer text = new StringBuffer("1" + System.getProperty("line.separator"));
-				for(int i = 2; i < root.getElementIndex( caretPosition ) + 2; i++){
+				int elementIndex = root.getElementIndex( caretPosition );
+				for(int i = 2; i < elementIndex + 2; i++){
 					text.append(i + System.getProperty("line.separator"));
 				}
 				return text.toString();
 			}
 			@Override
 			public void changedUpdate(DocumentEvent de) {
-				lineNumber.setText(getText());
+			    int currentLineCount = sourceCodeArea.getLineCount();
+			    if (mLineCount != currentLineCount) {
+			        mLineCount = currentLineCount;
+			        lineNumber.setText(getText());
+		            lineNumber.updateUI();
+			    }
 				compile.setEnabled(true);
 				saved = false;
 				highlighter.removeAllHighlights();
@@ -242,7 +251,12 @@ public class CompilerGUI extends JFrame implements UIListener {
 
 			@Override
 			public void insertUpdate(DocumentEvent de) {
-				lineNumber.setText(getText());
+                int currentLineCount = sourceCodeArea.getLineCount();
+                if (mLineCount != currentLineCount) {
+                    mLineCount = currentLineCount;
+                    lineNumber.setText(getText());
+                    lineNumber.updateUI();
+                }
 				compile.setEnabled(true);
 				saved = false;
 				highlighter.removeAllHighlights();
@@ -250,7 +264,12 @@ public class CompilerGUI extends JFrame implements UIListener {
 
 			@Override
 			public void removeUpdate(DocumentEvent de) {
-				lineNumber.setText(getText());
+                int currentLineCount = sourceCodeArea.getLineCount();
+                if (mLineCount != currentLineCount) {
+                    mLineCount = currentLineCount;
+                    lineNumber.setText(getText());
+                    lineNumber.updateUI();
+                }
 				compile.setEnabled(true);
 				saved = false;
 				highlighter.removeAllHighlights();

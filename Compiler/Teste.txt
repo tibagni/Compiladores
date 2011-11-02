@@ -50,7 +50,7 @@ inicio
 	se val < 10 entao 
                             p2;
                             p1:= verdadeiro;
-fim; 
+fim;
 
 procedimento p4;
 var i:inteiro;
@@ -70,7 +70,7 @@ inicio
 
 
 
-		para o qual se quer
+	para o qual se quer
 
 
 
