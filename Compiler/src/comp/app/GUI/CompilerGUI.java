@@ -320,12 +320,13 @@ public class CompilerGUI extends JFrame implements UIListener {
 		addWindowListener(new ActionClose());
 		setLocationRelativeTo(null);
 		setExtendedState(MAXIMIZED_BOTH);
+		sourceCodeArea.requestFocus();
 	}
 
 	/*
 	 * Salva o arquivo fonte no lugar desejado
 	 */
-	private void salvarFonte() {
+	private boolean salvarFonte() {
 
 		/*
 		 * Se fonteFile for null quer dizer que nao existe nenhum outro arquivo aberto
@@ -336,7 +337,7 @@ public class CompilerGUI extends JFrame implements UIListener {
 			int resp = fileChooser.showSaveDialog(null);
 
 			if(resp == MyFileChooser.CANCEL_OPTION) {
-				salvarFonte();
+				return false;
 			} else {
 				// Crio o arquivo com o nome escolhido no fileChooser e adiciono a extensao caso necessario
 				if(!fileChooser.getSelectedFile().getAbsolutePath().endsWith(LPD_FILE_EXTENSION)) {
@@ -355,7 +356,7 @@ public class CompilerGUI extends JFrame implements UIListener {
 
 					if(res == JOptionPane.NO_OPTION) {
 						sourceCodeFile = null;
-						salvarFonte();
+						return false;
 					}
 				}
 			}
@@ -380,6 +381,7 @@ public class CompilerGUI extends JFrame implements UIListener {
                 C_Log.error("Erro ao tentar fechar stream", e);
             }
 		}
+		return true;
 	}
 
 	private class ActionClose extends WindowAdapter {
@@ -460,7 +462,7 @@ public class CompilerGUI extends JFrame implements UIListener {
             fileName.setText(sourceCodeFile.getName());
             setTitle(sourceCodeFile.getName());
             errors.setText("");
-            //sourceCodeArea.setCaretPosition(0);
+            sourceCodeArea.setCaretPosition(0);
             fileReader.close();
 	    }
 	}
@@ -481,7 +483,9 @@ public class CompilerGUI extends JFrame implements UIListener {
 
 			// Salvo o fonte antes de compilar caso ele nao esteja salvo e faço a compilação
 			if (!saved) {
-				salvarFonte();
+				if(!salvarFonte()) {
+					return;
+				}
 			}
 			setCompilerRunning(true);
 
@@ -518,6 +522,7 @@ public class CompilerGUI extends JFrame implements UIListener {
 			setTitle(NEW_FILE_NAME);
 			sourceCodeFile = null;
 			errors.setText("");
+			sourceCodeArea.requestFocus();
 		}
 	}
 
