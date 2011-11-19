@@ -34,6 +34,8 @@ public class CompilerError {
 
     // SEMANTICO
     public static final int DUPLICATED_VAR                  = 24;
+    public static final int DUPLICATED_SUB_ROUTINE          = 25;
+    public static final int IDENTIFIER_NOT_FOUND            = 26;
 
     // Outros
     public static final int INVALID_FILE_ERROR              = 100;
@@ -189,6 +191,18 @@ public class CompilerError {
                 lineNumber;
 
             /* Erros da analise semantica *************************************/
+
+            case DUPLICATED_VAR:
+                return "Variavel duplicada! - linha: " +
+                		lineNumber;
+
+            case DUPLICATED_SUB_ROUTINE:
+                return "Procedimento ou funcao duplicado(a)! - linha: " +
+                        lineNumber;
+
+            case IDENTIFIER_NOT_FOUND:
+                return "Identificador nao declarado - linha: " +
+                		lineNumber;
 
 
             /* Erro desconhecido **********************************************/

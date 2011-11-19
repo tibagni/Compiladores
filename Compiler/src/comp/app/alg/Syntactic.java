@@ -2,6 +2,7 @@ package comp.app.alg;
 
 import comp.app.Symbols;
 import comp.app.Token;
+import comp.app.alg.Semantic.SymbolTableEntry;
 import comp.app.error.CompilerError;
 import comp.app.log.C_Log;
 
@@ -16,14 +17,22 @@ import comp.app.log.C_Log;
  * quando um token e nulo (quando esta thread for interrompida no momento da leitura do token)
  */
 
-public class Syntactic extends Algorithm {
+public class Syntactic {
     private Tokens mTokenList = Tokens.getInstance();
     private Token mCurrentToken;
     private int mLabel;
     private Thread mLexicalThread;
+    private Semantic mSemantic;
+
+    private SymbolTableEntry mEntry;
+
+    private int mVariableAddress;
 
     public Syntactic(Thread lexicalThread) {
         mLexicalThread = lexicalThread;
+        mSemantic = Semantic.getInstance();
+        mEntry = null;
+        mVariableAddress = 0;
     }
 
     public CompilerError execute() {
@@ -43,7 +52,13 @@ public class Syntactic extends Algorithm {
             return CompilerError.instantiateError(CompilerError.INVALID_PROGRAM_NAME, 0, 0);
         }
         // Identificador encontrado!
-        // TODO inserir na tabela de simbolos
+        // Insere na tabela de simbolos o nome do programa
+        mEntry = new SymbolTableEntry();
+        mEntry.mType = SymbolTableEntry.TYPE_PROGRAM_NAME;
+        mEntry.mLexema = mCurrentToken.getLexema();
+        mEntry.mLevel = SymbolTableEntry.SCOPE_MARK; // Escopo mais externo do programa
+        mSemantic.pushToSymbolTable(mEntry);
+
         mCurrentToken = mTokenList.getTokenFromBuffer();
         if (mCurrentToken == null || mCurrentToken.getSymbol() != Symbols.SPONTO_VIRGULA) {
             // Se o token for null, setamos a linha e a coluna como '0' para evitar NullPointerException
@@ -136,12 +151,19 @@ public class Syntactic extends Algorithm {
     private CompilerError processVariables() {
         CompilerError error = CompilerError.NONE();
         do {
-            // TODO procura variavel duplicada na tabela de simbolos
-//            if (tabelaSimbolos.contains(mCurrentToken.getLexema())) {
-//                return erro; DuplicatedVar
-//            }
+            // Procura variavel duplicada na tabela de simbolos
+            if (mSemantic.isVarAlreadyDeclared(mCurrentToken.getLexema())) {
+                return CompilerError.instantiateError(CompilerError.DUPLICATED_VAR,
+                        mCurrentToken.getTokenLine(), mCurrentToken.getTokenEndColumn());
+            }
 
-            // TODO inserir variavel na tabela de simbolos
+            // Variavel nao e duplicada, inserir na tabela de simbolos
+            mEntry = new SymbolTableEntry();
+            mEntry.mLexema = mCurrentToken.getLexema();
+            mEntry.mType = SymbolTableEntry.TYPE_VARIABLE;
+            mEntry.mAddress = mVariableAddress++; // Incrementa o endereco para o proximo registro
+            mSemantic.pushToSymbolTable(mEntry);
+
             mCurrentToken = mTokenList.getTokenFromBuffer();
             if (mCurrentToken != null && (mCurrentToken.getSymbol() == Symbols.SVIRGULA ||
                     mCurrentToken.getSymbol() == Symbols.SDOISPONTOS)) {
@@ -185,7 +207,9 @@ public class Syntactic extends Algorithm {
             error = CompilerError.instantiateError(CompilerError.UNKNOWN_TYPE,
             		line, col);
         } else {
-            // TODO coloca tipo na tabela de simbolos
+            // Coloca tipo na tabela de simbolos para todas as variaveis na tabela sem tipo
+            mSemantic.populateVarType(mCurrentToken.getSymbol());
+
             mCurrentToken = mTokenList.getTokenFromBuffer();
         }
 
@@ -195,7 +219,7 @@ public class Syntactic extends Algorithm {
     private CompilerError processSubRoutine() {
         CompilerError error = CompilerError.NONE();
         int label = mLabel;
-        // TODO GERA('', JMP rotulo, '');
+        // TODO GERA('', JMP label, '');
         mLabel++;
 
         if (mCurrentToken == null) {
@@ -241,16 +265,18 @@ public class Syntactic extends Algorithm {
             return CompilerError.instantiateError(CompilerError.UNKNOWN_ERROR, 0, 0);
         }
 
-        // TODO Nivel = L (marca ou novo galho)
-
         if (mCurrentToken.getSymbol() == Symbols.SIDENTIFICADOR) {
-        	// TODO Pesquisa declaracao1 do procedimento na tabela
-        	//if (/* TODO se não encontrou na tabela */) {
-        		 // TODO Insere_tabela(token.lexema,”procedimento”,nível, rótulo)
-                 // {guarda na TabSimb}
-        		 // TODO Gera(rotulo,NULL,´        ´,´            ´)
-        		 // {CALL irá buscar este rótulo na TabSimb}
-        		 mLabel++;
+        	// Pesquisa declaracao do procedimento na tabela
+        	if (!mSemantic.isSubRoutineAlreadyDeclared(mCurrentToken.getLexema())) {
+        	    mEntry = new SymbolTableEntry();
+        	    mEntry.mLevel = SymbolTableEntry.SCOPE_MARK;
+        	    mEntry.mLabel = mLabel++;
+        	    mEntry.mLexema = mCurrentToken.getLexema();
+        	    mEntry.mType = SymbolTableEntry.TYPE_PROCEDURE;
+        	    mSemantic.pushToSymbolTable(mEntry);
+
+                // CALL irá buscar este rótulo (mLabel) na TabSimb
+//        		  TODO Gera(rotulo,NULL,´        ´,´            ´)
 
         		 mCurrentToken = mTokenList.getTokenFromBuffer();
         		 if (mCurrentToken != null && (mCurrentToken.getSymbol() == Symbols.SPONTO_VIRGULA)) {
@@ -262,14 +288,17 @@ public class Syntactic extends Algorithm {
              		error = CompilerError.instantiateError(CompilerError.ILLEGAL_END_EXPRESSION,
     	            		line, col);
         		 }
-        	//} else {
-            	// TODO error = procedimento ja foi declarado; semantico
-        	//}
+        	} else {
+            	 error = CompilerError.instantiateError(CompilerError.DUPLICATED_SUB_ROUTINE,
+            	         mCurrentToken.getTokenLine(), mCurrentToken.getTokenEndColumn());
+        	}
         } else {
      		error = CompilerError.instantiateError(CompilerError.ILLEGAL_PROC_FUNC_DECLARATION,
             		mCurrentToken.getTokenLine(), mCurrentToken.getTokenEndColumn());
         }
-        // TODO Desempilha ou volta de nivel
+        // Desempilha - volta de nivel
+        mSemantic.popEverythingUntilScopeMark();
+        // TODO GERA(RETURN)
         return error;
     }
 
@@ -282,24 +311,23 @@ public class Syntactic extends Algorithm {
             return CompilerError.instantiateError(CompilerError.UNKNOWN_ERROR, 0, 0);
         }
 
-        // TODO Nivel = L (marca ou novo galho)
-
         if (mCurrentToken.getSymbol() == Symbols.SIDENTIFICADOR) {
-        	// TODO Pesquisa declaracao1 do procedimento na tabela
-//        	if (TODO se não encontrou na tabela) {
-       		 	// TODO Insere_tabela(token.lexema,””,nível, rótulo)
+        	// Pesquisa declaracao da funcao na tabela
+            if (!mSemantic.isSubRoutineAlreadyDeclared(mCurrentToken.getLexema())) {
+                mEntry = new SymbolTableEntry();
+                mEntry.mLevel = SymbolTableEntry.SCOPE_MARK;
+                mEntry.mLabel = mLabel++;
+                mEntry.mLexema = mCurrentToken.getLexema();
+                mEntry.mType = SymbolTableEntry.TYPE_PROCEDURE;
+                mSemantic.pushToSymbolTable(mEntry);
+
         		mCurrentToken = mTokenList.getTokenFromBuffer();
         		if (mCurrentToken != null && mCurrentToken.getSymbol() == Symbols.SDOISPONTOS) {
         			mCurrentToken = mTokenList.getTokenFromBuffer();
         			if (mCurrentToken != null && (mCurrentToken.getSymbol() == Symbols.SINTEIRO ||
         					mCurrentToken.getSymbol() == Symbols.SBOOLEANO)) {
-        				if (mCurrentToken.getSymbol() == Symbols.SINTEIRO) {
-        					// TODO então TABSIMB[pc].tipo:=
-                                 //função inteiro
-        				} else {
-       				 		// TODO então TABSIMB[pc].tipo:=
-                        		//função booleana
-        				}
+        			    // Seta o tipo de retorno da funcao na tabela de simbolos
+        			    mSemantic.setFunctionAtTopReturnType(mCurrentToken.getSymbol());
         				mCurrentToken = mTokenList.getTokenFromBuffer();
         				if (mCurrentToken != null && mCurrentToken.getSymbol() == Symbols.SPONTO_VIRGULA) {
         					error = analyseBlock();
@@ -324,14 +352,17 @@ public class Syntactic extends Algorithm {
     				error = CompilerError.instantiateError(CompilerError.ILLEGAL_RETURN_TYPE_DECLARATION, line,
     						col);
         		}
-//        	} else {
-//        		// TODO erro semantico - funcao duplicada, ja foi declarada
-//        	}
+        	} else {
+        		error = CompilerError.instantiateError(CompilerError.DUPLICATED_SUB_ROUTINE,
+        		        mCurrentToken.getTokenLine(), mCurrentToken.getTokenEndColumn());
+        	}
         } else {
      		error = CompilerError.instantiateError(CompilerError.ILLEGAL_PROC_FUNC_DECLARATION,
             		mCurrentToken.getTokenLine(), mCurrentToken.getTokenEndColumn());
         }
-        // TODO Desempilha ou volta de nive
+        // Desempilha - volta de nivel
+        mSemantic.popEverythingUntilScopeMark();
+        // TODO GERA(RETURN) Guardar valor de retorno da funcao nao sei como
         return error;
     }
 
@@ -576,17 +607,18 @@ public class Syntactic extends Algorithm {
         }
 
         if(mCurrentToken.getSymbol() == Symbols.SIDENTIFICADOR) {
-            //if(mLabel == 1) {// TODO pesquisa_tabela(token.lexema,nível,ind
-                //if(mLabel == 1/* TODO TabSimb[ind].tipo = “função inteiro”) ou
-                //        (TabSimb[ind].tipo = “função booleano”*/) {
-                    //error = processFuncCall();
-                    //if(error.getErrorCode() != CompilerError.NONE_ERROR_CODE) return error;
-                //} else {
+            int index = mSemantic.getFirstIndexOf(mCurrentToken.getLexema());
+            if(index != -1) {
+                if(mSemantic.isFunction(index)) {
+                    error = processFuncCall();
+                    if(error.getErrorCode() != CompilerError.NONE_ERROR) return error;
+                } else {
                     mCurrentToken = mTokenList.getTokenFromBuffer();
-                //}
-            //} else {
-                //TODO erro semantico
-            //}
+                }
+            } else {
+                error = CompilerError.instantiateError(CompilerError.IDENTIFIER_NOT_FOUND,
+                        mCurrentToken.getTokenLine(), mCurrentToken.getTokenEndColumn());
+            }
         } else if(mCurrentToken.getSymbol() == Symbols.SNUMERO) {
             mCurrentToken = mTokenList.getTokenFromBuffer();
         } else if(mCurrentToken.getSymbol() == Symbols.SNAO) {
@@ -619,7 +651,7 @@ public class Syntactic extends Algorithm {
         CompilerError error = CompilerError.NONE();
         int label, label2;
         label = mLabel;
-        // Gera(rotulo,NULL,´             ´,´               ´)      {início do while}
+        // Gera(rotulo,NULL,´             ´,´               ´)      {início do while} TODO geracao de codigo
         mLabel++;
 
         mCurrentToken = mTokenList.getTokenFromBuffer();
@@ -653,7 +685,7 @@ public class Syntactic extends Algorithm {
         if (mCurrentToken != null && mCurrentToken.getSymbol() == Symbols.SABRE_PARENTESES) {
             mCurrentToken = mTokenList.getTokenFromBuffer();
             if (mCurrentToken != null && mCurrentToken.getSymbol() == Symbols.SIDENTIFICADOR) {
-                //if (/* TODO se variavel esta na tabela (token.lexema)*/) {
+                if (mSemantic.getFirstIndexOf(mCurrentToken.getLexema()) != -1) {
                     mCurrentToken = mTokenList.getTokenFromBuffer();
                     if (mCurrentToken != null && mCurrentToken.getSymbol() == Symbols.SFECHA_PARENTESES) {
                         mCurrentToken = mTokenList.getTokenFromBuffer();
@@ -664,9 +696,10 @@ public class Syntactic extends Algorithm {
                         error = CompilerError.instantiateError(CompilerError.MISSING_CLOSE_PARENTHESIS,
                                 line, col);
                     }
-                //} else {
-                    // TODO erro semantico
-                //}
+                } else {
+                    error = CompilerError.instantiateError(CompilerError.IDENTIFIER_NOT_FOUND,
+                            mCurrentToken.getTokenLine(), mCurrentToken.getTokenEndColumn());
+                    }
             } else {
                 // Se o token for null, setamos a linha e a coluna como '0' para evitar NullPointerException
                 int line = mCurrentToken == null ? 0 : mCurrentToken.getTokenLine();
@@ -692,7 +725,7 @@ public class Syntactic extends Algorithm {
         if (mCurrentToken != null && mCurrentToken.getSymbol() == Symbols.SABRE_PARENTESES) {
             mCurrentToken = mTokenList.getTokenFromBuffer();
             if (mCurrentToken != null && mCurrentToken.getSymbol() == Symbols.SIDENTIFICADOR) {
-                //if (/* TODO se variavel ou funcao esta na tabela (token.lexema)*/) {
+                if (mSemantic.getFirstIndexOf(mCurrentToken.getLexema()) != -1) {
                     mCurrentToken = mTokenList.getTokenFromBuffer();
                     if (mCurrentToken != null && mCurrentToken.getSymbol() == Symbols.SFECHA_PARENTESES) {
                         mCurrentToken = mTokenList.getTokenFromBuffer();
@@ -703,9 +736,10 @@ public class Syntactic extends Algorithm {
                         error = CompilerError.instantiateError(CompilerError.MISSING_CLOSE_PARENTHESIS,
                                 line, col);
                     }
-                //} else {
-                    // TODO erro semantico
-                //}
+                } else {
+                    error = CompilerError.instantiateError(CompilerError.IDENTIFIER_NOT_FOUND,
+                            mCurrentToken.getTokenLine(), mCurrentToken.getTokenEndColumn());
+                }
             } else {
                 // Se o token for null, setamos a linha e a coluna como '0' para evitar NullPointerException
                 int line = mCurrentToken == null ? 0 : mCurrentToken.getTokenLine();
