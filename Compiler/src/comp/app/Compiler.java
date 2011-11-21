@@ -70,7 +70,6 @@ public class Compiler extends Thread {
         if (getLexicalOutput().getErrorCode() != CompilerError.NONE_ERROR) {
             mCompilingThread.interrupt();
             notifyUIListener(getLexicalOutput());
-
         } else {
             // Espera a segunda thread terminar para verificar o status da compilacao
             synchronized (compilation) {
