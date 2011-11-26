@@ -36,6 +36,7 @@ public class CompilerError {
     public static final int DUPLICATED_VAR                  = 24;
     public static final int DUPLICATED_SUB_ROUTINE          = 25;
     public static final int IDENTIFIER_NOT_FOUND            = 26;
+    public static final int EXPRESSION_BOOLEAN_EXPECTED     = 27;
 
     // Outros
     public static final int INVALID_FILE_ERROR              = 100;
@@ -203,6 +204,10 @@ public class CompilerError {
             case IDENTIFIER_NOT_FOUND:
                 return "Identificador nao declarado - linha: " +
                 		lineNumber;
+
+            case EXPRESSION_BOOLEAN_EXPECTED:
+                return "Boolean esperado mas nao encontrado - linha: " +
+                        lineNumber;
 
 
             /* Erro desconhecido **********************************************/

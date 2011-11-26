@@ -5,6 +5,9 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Stack;
 
+import comp.app.Symbols;
+import comp.app.error.InvalidExpressionException;
+
 public class Semantic {
 
     private Stack<SymbolTableEntry> mSymbolTable;
@@ -162,6 +165,22 @@ public class Semantic {
     }
 
     /**
+     *
+     * @param index
+     * @return
+     */
+    public int getVarFuncType(int index) {
+        SymbolTableEntry s = mSymbolTable.get(index);
+        if (s.mType == SymbolTableEntry.TYPE_FUNCTION) {
+            return s.mReturnType;
+        } else if (s.mType == SymbolTableEntry.TYPE_VARIABLE) {
+            return s.mVarType;
+        } else {
+            return -1;
+        }
+    }
+
+    /**
      * Dado um indice na tabela de simbolos, retorna se a entrada e referenta
      * a uma funcao
      *
@@ -170,6 +189,109 @@ public class Semantic {
      */
     public boolean isFunction(int index) {
         if (mSymbolTable.get(index).mType == SymbolTableEntry.TYPE_FUNCTION) {
+            return true;
+        }
+        return false;
+    }
+
+    public static final int EXPRESSION_EVALUATION_TYPE_INVALID = -1;
+    public static final int EXPRESSION_EVALUATION_TYPE_INT = 0;
+    public static final int EXPRESSION_EVALUATION_TYPE_BOOLEAN = 1;
+
+    /**
+     * Avalia semanticamente uma expressao
+     *
+     * @param exp na forma InFixa
+     * @return EXPRESSION_EVALUATION_TYPE_INT se a analise for concluida com sucesso
+     *      e o resultado da expressao e do tipo inteiro ou
+     *      EXPRESSION_EVALUATION_TYPE_BOOLEAN se for booleano
+     * @throws InvalidExpressionException se a analise falhar por algum motivo
+     */
+    public int EvaluateExpression(ExpressionElement[] infixExp) throws InvalidExpressionException {
+        ExpressionElement[] expression = expressionToPostFix(infixExp);
+        Stack<ExpressionElement> stack = new Stack<ExpressionElement>();
+        for (ExpressionElement element : expression) {
+            if (isOperand(element)) {
+                stack.push(element);
+            } else if (isOperator(element.mValue)) {
+                ExpressionElement operandToPush = null;
+                if ("+u".equalsIgnoreCase(element.mValue) ||
+                    "-u".equalsIgnoreCase(element.mValue)) {
+                    ExpressionElement poppedOperand = stack.pop();
+                    if (poppedOperand.mType != EXPRESSION_EVALUATION_TYPE_INT) {
+                        throw new InvalidExpressionException(); //TODO
+                    }
+                    operandToPush = poppedOperand;
+                } else if ("nao".equalsIgnoreCase(element.mValue)) {
+                    ExpressionElement poppedOperand = stack.pop();
+                    if (poppedOperand.mType != EXPRESSION_EVALUATION_TYPE_BOOLEAN) {
+                        throw new InvalidExpressionException(); //TODO
+                    }
+                    operandToPush = poppedOperand;
+                } else if (getOperatorType(element.mValue) == EXPRESSION_EVALUATION_TYPE_INT) {
+                    ExpressionElement poppedOperand1 = stack.pop();
+                    ExpressionElement poppedOperand2 = stack.pop();
+                    if (poppedOperand1.mType != EXPRESSION_EVALUATION_TYPE_INT ||
+                        poppedOperand2.mType != EXPRESSION_EVALUATION_TYPE_INT) {
+                        throw new InvalidExpressionException(); //TODO
+                    }
+                    // Aqui o valor do elemento nao importa
+                    // Cria um elemento so com o tipo
+                    operandToPush = new ExpressionElement(getOperatorReturnType(element.mValue));
+                } else if (getOperatorType(element.mValue) == EXPRESSION_EVALUATION_TYPE_BOOLEAN) {
+                    ExpressionElement poppedOperand1 = stack.pop();
+                    ExpressionElement poppedOperand2 = stack.pop();
+                    if (poppedOperand1.mType != EXPRESSION_EVALUATION_TYPE_BOOLEAN ||
+                        poppedOperand2.mType != EXPRESSION_EVALUATION_TYPE_BOOLEAN) {
+                        throw new InvalidExpressionException(); //TODO
+                    }
+                    // Aqui o valor do elemento nao importa
+                    // Cria um elemento so com o tipo
+                    operandToPush = new ExpressionElement(getOperatorReturnType(element.mValue));
+                } else {
+                    throw new IllegalArgumentException("Fodeu!!!");
+                }
+
+                stack.push(operandToPush);
+            }
+        }
+        if (stack.size() != 1) {
+            throw new IllegalArgumentException("Fodeu!!!");
+        }
+        return stack.pop().mType;
+    }
+
+    private int getOperatorType(String op) {
+        if ("+".equals(op) ||
+            "-".equals(op) ||
+            "*".equals(op) ||
+            "div".equals(op) ||
+            ">".equals(op) ||
+            "<".equals(op) ||
+            ">=".equals(op) ||
+            "<=".equals(op) ||
+            "=".equals(op)) {
+            return EXPRESSION_EVALUATION_TYPE_INT;
+        }
+        return EXPRESSION_EVALUATION_TYPE_BOOLEAN;
+    }
+
+    private int getOperatorReturnType(String op) {
+        if ("+u".equalsIgnoreCase(op) ||
+            "-u".equalsIgnoreCase(op) ||
+            "div".equalsIgnoreCase(op) ||
+            "*".equalsIgnoreCase(op) ||
+            "+".equalsIgnoreCase(op) ||
+            "-".equalsIgnoreCase(op)) {
+            return EXPRESSION_EVALUATION_TYPE_INT;
+        }
+        return EXPRESSION_EVALUATION_TYPE_BOOLEAN;
+    }
+
+    private boolean isOperand(ExpressionElement e) {
+        if (e == null) return false;
+        if (e.mType == EXPRESSION_EVALUATION_TYPE_INT  ||
+            e.mType == EXPRESSION_EVALUATION_TYPE_BOOLEAN) {
             return true;
         }
         return false;
@@ -222,26 +344,26 @@ public class Semantic {
      * @param in Vetor contendo a expressao in-fixa
      * @return Vetor contendo a expressao em pos-fixa
      */
-    public String[] expressionToPostFix(String[] in) {
-        List<String> post = new ArrayList<String>();
-        Stack<String> stack = new Stack<String>();
+    public ExpressionElement[] expressionToPostFix(ExpressionElement[] in) {
+        List<ExpressionElement> post = new ArrayList<ExpressionElement>();
+        Stack<ExpressionElement> stack = new Stack<ExpressionElement>();
 
-        for (String element : in) {
-            if (isOperator(element)) {
+        for (ExpressionElement element : in) {
+            if (isOperator(element.mValue)) {
                 // Verifica precedencia se o topo tambem for um operando
-                if (stack.size() > 0 && isOperator(stack.peek())) {
-                    String poppedElement;
-                    while (stack.size() > 0 && (calculatePriorities(stack.peek(), element) < 0)) {
+                if (stack.size() > 0 && isOperator(stack.peek().mValue)) {
+                    ExpressionElement poppedElement;
+                    while (stack.size() > 0 && (calculatePriorities(stack.peek().mValue, element.mValue) < 0)) {
                         poppedElement = stack.pop();
                         post.add(poppedElement);
                     }
                 }
                 stack.push(element);
-            } else if ("(".equals(element)) {
+            } else if ("(".equals(element.mValue)) {
                 stack.push(element);
-            } else if (")".equals(element)) {
-                String poppedElement = null;
-                while (stack.size() > 0 && !("(".equals(stack.peek()))) {
+            } else if (")".equals(element.mValue)) {
+                ExpressionElement poppedElement = null;
+                while (stack.size() > 0 && !("(".equals(stack.peek().mValue))) {
                     poppedElement = stack.pop();
                     post.add(poppedElement);
                 }
@@ -252,13 +374,13 @@ public class Semantic {
             }
         }
         // Verifica se sobrou algo na pilha para desempilhar!
-        String poppedElement;
+        ExpressionElement poppedElement;
         while (stack.size() > 0) {
             poppedElement = stack.pop();
             post.add(poppedElement);
         }
 
-        return post.toArray(new String[post.size()]);
+        return post.toArray(new ExpressionElement[post.size()]);
     }
 
     /**
@@ -339,6 +461,40 @@ public class Semantic {
             return true;
         }
         return false;
+    }
+
+    public static class ExpressionElement {
+        public String mValue;
+        public int mType;
+
+        public ExpressionElement(String value, int typeInSymbols) {
+            mValue = value;
+            if (typeInSymbols == Symbols.SIDENTIFICADOR) {
+                int index = Semantic.getInstance().getFirstIndexOf(mValue);
+                SymbolTableEntry entry = Semantic.getInstance().mSymbolTable.get(index);
+                if (entry.mType == SymbolTableEntry.TYPE_FUNCTION) {
+                    typeInSymbols = entry.mReturnType;
+                } else if (entry.mType == SymbolTableEntry.TYPE_VARIABLE) {
+                    typeInSymbols = entry.mVarType;
+                }
+            }
+
+            if (typeInSymbols == Symbols.SINTEIRO ||
+                typeInSymbols == Symbols.SNUMERO) {
+                mType = EXPRESSION_EVALUATION_TYPE_INT;
+            } else if (typeInSymbols == Symbols.SBOOLEANO ||
+                       typeInSymbols == Symbols.SVERDADEIRO ||
+                       typeInSymbols == Symbols.SFALSO) {
+                mType = EXPRESSION_EVALUATION_TYPE_BOOLEAN;
+            } else {
+                mType = EXPRESSION_EVALUATION_TYPE_INVALID;
+            }
+        }
+
+        public ExpressionElement(int type) {
+            mValue = "";
+            mType = type;
+        }
     }
 
     /**

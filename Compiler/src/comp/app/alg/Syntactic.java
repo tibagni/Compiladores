@@ -1,9 +1,13 @@
 package comp.app.alg;
 
+import java.util.ArrayList;
+
 import comp.app.Symbols;
 import comp.app.Token;
+import comp.app.alg.Semantic.ExpressionElement;
 import comp.app.alg.Semantic.SymbolTableEntry;
 import comp.app.error.CompilerError;
+import comp.app.error.InvalidExpressionException;
 import comp.app.log.C_Log;
 
 /*
@@ -24,6 +28,11 @@ public class Syntactic {
     private Thread mLexicalThread;
     private Semantic mSemantic;
 
+    /** Variavel utilizada para que uma expressao possa ser
+     * analisada pelo semantico e geracao de codigo
+     */
+    private ArrayList<ExpressionElement> mCurrentExpression;
+
     private SymbolTableEntry mEntry;
 
     private int mVariableAddress;
@@ -33,6 +42,7 @@ public class Syntactic {
         mSemantic = Semantic.getInstance();
         mEntry = null;
         mVariableAddress = 0;
+        mCurrentExpression = new ArrayList<ExpressionElement>();
     }
 
     public CompilerError execute() {
@@ -318,7 +328,7 @@ public class Syntactic {
                 mEntry.mLevel = SymbolTableEntry.SCOPE_MARK;
                 mEntry.mLabel = mLabel++;
                 mEntry.mLexema = mCurrentToken.getLexema();
-                mEntry.mType = SymbolTableEntry.TYPE_PROCEDURE;
+                mEntry.mType = SymbolTableEntry.TYPE_FUNCTION;
                 mSemantic.pushToSymbolTable(mEntry);
 
         		mCurrentToken = mTokenList.getTokenFromBuffer();
@@ -390,9 +400,9 @@ public class Syntactic {
             		    return CompilerError.instantiateError(CompilerError.UNKNOWN_ERROR, 0, 0);
             		}
             	} else {
-             		return CompilerError.instantiateError(CompilerError.ILLEGAL_END_EXPRESSION,
-             		       mCurrentToken.getTokenLine(), mCurrentToken.getTokenEndColumn());
-            	}
+                    return CompilerError.instantiateError(CompilerError.ILLEGAL_END_EXPRESSION,
+                            mCurrentToken.getTokenLine(), mCurrentToken.getTokenEndColumn());
+                }
 
                 if (mCurrentToken == null) {
                     error = CompilerError.instantiateError(CompilerError.UNKNOWN_ERROR, 0, 0);
@@ -436,7 +446,7 @@ public class Syntactic {
         	    mCurrentToken = mTokenList.getTokenFromBuffer();
                 if (mCurrentToken != null) {
                     if (mCurrentToken.getSymbol() == Symbols.SATRIBUICAO) {
-                        error = processAttr();
+                        error = processAttr(id);
                     } else {
                         error = processProcCall(id);
                     }
@@ -463,10 +473,35 @@ public class Syntactic {
         return error;
     }
 
-    private CompilerError processAttr() {
+    private CompilerError processAttr(Token var) {
         CompilerError error = CompilerError.NONE();
         mCurrentToken = mTokenList.getTokenFromBuffer();
+        mCurrentExpression.clear();
         error = analyseExpression();
+        // O resultado da expressao deve ser booleano
+        try {
+            int result = mSemantic.EvaluateExpression(mCurrentExpression.toArray(new ExpressionElement[mCurrentExpression.size()]));
+            // TODO compara o tipo da expressao com o tipo da variavel que sofre a atribuicao
+            int index = mSemantic.getFirstIndexOf(var.getLexema());
+            int type = mSemantic.getVarFuncType(index);
+            if (type == Symbols.SINTEIRO) {
+                type = Semantic.EXPRESSION_EVALUATION_TYPE_INT;
+            } else if (type == Symbols.SBOOLEANO) {
+                type = Semantic.EXPRESSION_EVALUATION_TYPE_BOOLEAN;
+            } else {
+                // TODO temporario
+                throw new IllegalArgumentException("fodeu! tirar essa merda daqui");
+            }
+
+            if (result != type && error.getErrorCode() == CompilerError.NONE_ERROR) {
+                error = CompilerError.instantiateError(
+                        CompilerError.EXPRESSION_BOOLEAN_EXPECTED,
+                        mCurrentToken.getTokenLine(),
+                        mCurrentToken.getTokenEndColumn());
+            }
+        } catch (InvalidExpressionException ex) {
+            // TODO
+        }
 
         return error;
     }
@@ -493,6 +528,7 @@ public class Syntactic {
             int col  = mCurrentToken == null ? 0 : mCurrentToken.getTokenEndColumn();
             error = CompilerError.instantiateError(CompilerError.INVALID_PROC_FUNC_NAME, line, col);
         }
+        mCurrentToken = mTokenList.getTokenFromBuffer();
 
         return error;
     }
@@ -501,7 +537,23 @@ public class Syntactic {
         CompilerError error = CompilerError.NONE();
 
         mCurrentToken = mTokenList.getTokenFromBuffer();
+
+        mCurrentExpression.clear();
         error = analyseExpression();
+        // O resultado da expressao deve ser booleano
+        try {
+            int result = mSemantic.EvaluateExpression(mCurrentExpression.toArray(new ExpressionElement[mCurrentExpression.size()]));
+            if (result != Semantic.EXPRESSION_EVALUATION_TYPE_BOOLEAN
+                    && error.getErrorCode() == CompilerError.NONE_ERROR) {
+                error = CompilerError.instantiateError(
+                        CompilerError.EXPRESSION_BOOLEAN_EXPECTED,
+                        mCurrentToken.getTokenLine(),
+                        mCurrentToken.getTokenEndColumn());
+            }
+        } catch (InvalidExpressionException ex) {
+            // TODO
+        }
+
         // Nao continua se a analise da expressao ja falhou!
         if (error.getErrorCode() != CompilerError.NONE_ERROR) return error;
 
@@ -543,6 +595,7 @@ public class Syntactic {
                         || mCurrentToken.getSymbol() == Symbols.SMENOR
                         || mCurrentToken.getSymbol() == Symbols.SMENORIG || mCurrentToken
                         .getSymbol() == Symbols.SDIF)) {
+            saveExpressionElement(mCurrentToken);
             mCurrentToken = mTokenList.getTokenFromBuffer();
             error = analyseSimpleExpression();
         }
@@ -557,6 +610,7 @@ public class Syntactic {
         }
 
         if (mCurrentToken.getSymbol() == Symbols.SMAIS || mCurrentToken.getSymbol() == Symbols.SMENOS) {
+            saveExpressionElement(mCurrentToken, true);
             mCurrentToken = mTokenList.getTokenFromBuffer();
         }
 
@@ -569,6 +623,7 @@ public class Syntactic {
 
         while (mCurrentToken.getSymbol() == Symbols.SMAIS || mCurrentToken.getSymbol() == Symbols.SMENOS
                 || mCurrentToken.getSymbol() == Symbols.SOU) {
+            saveExpressionElement(mCurrentToken);
             mCurrentToken = mTokenList.getTokenFromBuffer();
             error = analyseTerm();
             if (mCurrentToken == null) {
@@ -589,6 +644,7 @@ public class Syntactic {
 
         while (mCurrentToken.getSymbol() == Symbols.SMULT || mCurrentToken.getSymbol() == Symbols.SDIV
                 || mCurrentToken.getSymbol() == Symbols.SE) {
+            saveExpressionElement(mCurrentToken);
             mCurrentToken = mTokenList.getTokenFromBuffer();
             error = analyseFactor();
             if (mCurrentToken == null) {
@@ -610,9 +666,11 @@ public class Syntactic {
             int index = mSemantic.getFirstIndexOf(mCurrentToken.getLexema());
             if(index != -1) {
                 if(mSemantic.isFunction(index)) {
+                    saveExpressionElement(mCurrentToken);
                     error = processFuncCall();
                     if(error.getErrorCode() != CompilerError.NONE_ERROR) return error;
                 } else {
+                    saveExpressionElement(mCurrentToken);
                     mCurrentToken = mTokenList.getTokenFromBuffer();
                 }
             } else {
@@ -620,17 +678,21 @@ public class Syntactic {
                         mCurrentToken.getTokenLine(), mCurrentToken.getTokenEndColumn());
             }
         } else if(mCurrentToken.getSymbol() == Symbols.SNUMERO) {
+            saveExpressionElement(mCurrentToken);
             mCurrentToken = mTokenList.getTokenFromBuffer();
         } else if(mCurrentToken.getSymbol() == Symbols.SNAO) {
+            saveExpressionElement(mCurrentToken);
             mCurrentToken = mTokenList.getTokenFromBuffer();
             error = analyseFactor();
         } else if(mCurrentToken.getSymbol() == Symbols.SABRE_PARENTESES) {
+            saveExpressionElement(mCurrentToken);
             mCurrentToken = mTokenList.getTokenFromBuffer();
             error = analyseExpression();
             // Se falhou, nao continua
             if(error.getErrorCode() != CompilerError.NONE_ERROR) return error;
 
             if(mCurrentToken.getSymbol() == Symbols.SFECHA_PARENTESES) {
+                saveExpressionElement(mCurrentToken);
                 mCurrentToken = mTokenList.getTokenFromBuffer();
             } else {
                 error = CompilerError.instantiateError(CompilerError.MALFORMED_EXPRESSION,
@@ -638,13 +700,24 @@ public class Syntactic {
             }
         } else if (mCurrentToken.getSymbol() == Symbols.SVERDADEIRO ||
                 mCurrentToken.getSymbol() == Symbols.SFALSO) {
+            saveExpressionElement(mCurrentToken);
             mCurrentToken = mTokenList.getTokenFromBuffer();
-        } else {
-            error = CompilerError.instantiateError(CompilerError.MALFORMED_EXPRESSION,
-                    mCurrentToken.getTokenLine(), mCurrentToken.getTokenEndColumn());
         }
 
         return error;
+    }
+
+    private void saveExpressionElement(Token t) {
+        saveExpressionElement(t, false);
+    }
+
+    private void saveExpressionElement(Token t, boolean isUn) {
+        ExpressionElement e = new ExpressionElement(t.getLexema(), t.getSymbol());
+        if (isUn) {
+            e.mValue = e.mValue + "u";
+        }
+        mCurrentExpression.add(e);
+
     }
 
     private CompilerError processWhile() {
@@ -655,7 +728,21 @@ public class Syntactic {
         mLabel++;
 
         mCurrentToken = mTokenList.getTokenFromBuffer();
+        mCurrentExpression.clear();
         error = analyseExpression();
+        // O resultado da expressao deve ser booleano
+        try {
+            int result = mSemantic.EvaluateExpression(mCurrentExpression.toArray(new ExpressionElement[mCurrentExpression.size()]));
+            if (result != Semantic.EXPRESSION_EVALUATION_TYPE_BOOLEAN
+                    && error.getErrorCode() == CompilerError.NONE_ERROR) {
+                error = CompilerError.instantiateError(
+                        CompilerError.EXPRESSION_BOOLEAN_EXPECTED,
+                        mCurrentToken.getTokenLine(),
+                        mCurrentToken.getTokenEndColumn());
+            }
+        } catch (InvalidExpressionException ex) {
+            // TODO
+        }
         // Nao continua se a analise da expressao ja falhou!
         if (error.getErrorCode() != CompilerError.NONE_ERROR) return error;
 
