@@ -16,14 +16,14 @@ import comp.app.Token;
 
 /**
  * C_Log - Compiler Log
- * 
+ *
  * @author Tiago
  */
 public class C_Log {
     private static Logger sLogger = Logger.getLogger("C_Log");
     private static FileHandler sTokens;
     private static FileHandler sLog;
-    
+
     private static final String TOKEN_LOG = "Tokens.log";
     private static final String LOG_FILE  = "Compiler.log";
 
@@ -40,9 +40,10 @@ public class C_Log {
         if (tokens.exists()) {
             boolean deleted = tokens.delete();
             if (!deleted) {
-                // TODO fazer alguma coisa quando o arquivo nao e removido
+                // O arquivo nao foi removido, fazer o que?
+                // FODA-SE
             }
-        }        
+        }
     }
 
     /**
@@ -127,9 +128,10 @@ public class C_Log {
         if (tokens.exists()) {
             boolean deleted = tokens.delete();
             if (!deleted) {
-                // TODO fazer alguma coisa quando o arquivo nao e removido
+                // O arquivo nao foi removido, fazer o que?
+                // FODA-SE
             }
-        }        
+        }
     }
 
     public static void logToken(Token token) {

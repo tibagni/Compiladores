@@ -5,7 +5,9 @@ import java.io.IOException;
 
 import javax.swing.SwingUtilities;
 
+import comp.app.alg.CodeGenerator;
 import comp.app.alg.Lexical;
+import comp.app.alg.Semantic;
 import comp.app.alg.Syntactic;
 import comp.app.alg.Tokens;
 import comp.app.error.CompilerError;
@@ -39,6 +41,11 @@ public class Compiler extends Thread {
     }
 
     private void compile() {
+        // Limpa o estado de alguma compilacao anterior
+        Tokens.getInstance().clear();
+        Semantic.getInstance().clearSymbolTable();
+        CodeGenerator.getInstance().reset();
+
         // Inicia as threds para a compilação
         mLexicalThread = new Thread(new LexicalThread(mSourceFile));
         mCompilingThread = new Thread(new CompilingThread());

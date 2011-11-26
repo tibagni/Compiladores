@@ -27,6 +27,7 @@ public class Syntactic {
     private int mLabel;
     private Thread mLexicalThread;
     private Semantic mSemantic;
+    private CodeGenerator mCodeGenerator;
 
     /** Variavel utilizada para que uma expressao possa ser
      * analisada pelo semantico e geracao de codigo
@@ -40,6 +41,7 @@ public class Syntactic {
     public Syntactic(Thread lexicalThread) {
         mLexicalThread = lexicalThread;
         mSemantic = Semantic.getInstance();
+        mCodeGenerator = CodeGenerator.getInstance();
         mEntry = null;
         mVariableAddress = 0;
         mCurrentExpression = new ArrayList<ExpressionElement>();
@@ -78,6 +80,10 @@ public class Syntactic {
             		line, col);
         }
 
+        //[GERACAO DE CODIGO]
+        mCodeGenerator.appendCode("START");
+        //[GERACAO DE CODIGO]
+
         error = analyseBlock();
         if (error.getErrorCode() == CompilerError.NONE_ERROR) {
             if (mCurrentToken == null
@@ -99,6 +105,9 @@ public class Syntactic {
             	// ErroLexico - UnknownError
             	return CompilerError.instantiateError(CompilerError.UNKNOWN_ERROR, 0, 0);
             }
+            //[GERACAO DE CODIGO]
+            mCodeGenerator.appendCode("HLT");
+            //[GERACAO DE CODIGO]
         }
 
         return error;
@@ -162,7 +171,7 @@ public class Syntactic {
         CompilerError error = CompilerError.NONE();
         do {
             // Procura variavel duplicada na tabela de simbolos
-            if (mSemantic.isVarAlreadyDeclared(mCurrentToken.getLexema())) {
+            if (mSemantic.isVarAlreadyDeclaredInScope(mCurrentToken.getLexema())) {
                 return CompilerError.instantiateError(CompilerError.DUPLICATED_VAR,
                         mCurrentToken.getTokenLine(), mCurrentToken.getTokenEndColumn());
             }
@@ -229,7 +238,9 @@ public class Syntactic {
     private CompilerError processSubRoutine() {
         CompilerError error = CompilerError.NONE();
         int label = mLabel;
-        // TODO GERA('', JMP label, '');
+        //[GERACAO DE CODIGO]
+        mCodeGenerator.appendCode("JMP " + label);
+        //[GERACAO DE CODIGO]
         mLabel++;
 
         if (mCurrentToken == null) {
@@ -262,7 +273,9 @@ public class Syntactic {
         		break;
         	}
         }
-        // TODO GERA(label, null, '', '')
+        //[GERACAO DE CODIGO]
+        mCodeGenerator.appendCode(String.valueOf(label) + " NULL");
+        //[GERACAO DE CODIGO]
         return error;
     }
 
@@ -277,7 +290,7 @@ public class Syntactic {
 
         if (mCurrentToken.getSymbol() == Symbols.SIDENTIFICADOR) {
         	// Pesquisa declaracao do procedimento na tabela
-        	if (!mSemantic.isSubRoutineAlreadyDeclared(mCurrentToken.getLexema())) {
+        	if (!mSemantic.isSubRoutineAlreadyDeclaredInScope(mCurrentToken.getLexema())) {
         	    mEntry = new SymbolTableEntry();
         	    mEntry.mLevel = SymbolTableEntry.SCOPE_MARK;
         	    mEntry.mLabel = mLabel++;
@@ -286,7 +299,9 @@ public class Syntactic {
         	    mSemantic.pushToSymbolTable(mEntry);
 
                 // CALL irá buscar este rótulo (mLabel) na TabSimb
-//        		  TODO Gera(rotulo,NULL,´        ´,´            ´)
+                //[GERACAO DE CODIGO]
+                mCodeGenerator.appendCode(String.valueOf(mEntry.mLabel) + " NULL");
+                //[GERACAO DE CODIGO]
 
         		 mCurrentToken = mTokenList.getTokenFromBuffer();
         		 if (mCurrentToken != null && (mCurrentToken.getSymbol() == Symbols.SPONTO_VIRGULA)) {
@@ -308,7 +323,9 @@ public class Syntactic {
         }
         // Desempilha - volta de nivel
         mSemantic.popEverythingUntilScopeMark();
-        // TODO GERA(RETURN)
+        //[GERACAO DE CODIGO]
+        mCodeGenerator.appendCode("RETURN");
+        //[GERACAO DE CODIGO]
         return error;
     }
 
@@ -323,7 +340,7 @@ public class Syntactic {
 
         if (mCurrentToken.getSymbol() == Symbols.SIDENTIFICADOR) {
         	// Pesquisa declaracao da funcao na tabela
-            if (!mSemantic.isSubRoutineAlreadyDeclared(mCurrentToken.getLexema())) {
+            if (!mSemantic.isSubRoutineAlreadyDeclaredInScope(mCurrentToken.getLexema())) {
                 mEntry = new SymbolTableEntry();
                 mEntry.mLevel = SymbolTableEntry.SCOPE_MARK;
                 mEntry.mLabel = mLabel++;
@@ -476,12 +493,18 @@ public class Syntactic {
     private CompilerError processAttr(Token var) {
         CompilerError error = CompilerError.NONE();
         mCurrentToken = mTokenList.getTokenFromBuffer();
+
+        // Verifica se a variavel ja foi declarada
+        if (!mSemantic.isIdentifierDeclared(var.getLexema())) {
+            return CompilerError.instantiateError(CompilerError.IDENTIFIER_NOT_FOUND, var.getTokenLine(), 0);
+        }
+
         mCurrentExpression.clear();
         error = analyseExpression();
-        // O resultado da expressao deve ser booleano
+        if (error.getErrorCode() != CompilerError.NONE_ERROR) return error;
+
         try {
-            int result = mSemantic.EvaluateExpression(mCurrentExpression.toArray(new ExpressionElement[mCurrentExpression.size()]));
-            // TODO compara o tipo da expressao com o tipo da variavel que sofre a atribuicao
+            int result = mSemantic.evaluateExpression(mCurrentExpression.toArray(new ExpressionElement[mCurrentExpression.size()]));
             int index = mSemantic.getFirstIndexOf(var.getLexema());
             int type = mSemantic.getVarFuncType(index);
             if (type == Symbols.SINTEIRO) {
@@ -489,8 +512,12 @@ public class Syntactic {
             } else if (type == Symbols.SBOOLEANO) {
                 type = Semantic.EXPRESSION_EVALUATION_TYPE_BOOLEAN;
             } else {
-                // TODO temporario
-                throw new IllegalArgumentException("fodeu! tirar essa merda daqui");
+                throw new IllegalArgumentException("fodeu!");
+            }
+
+            // Verifica retorno de funcao
+            if (mSemantic.isFunction(index) && !mSemantic.isScope(index)) {
+                return CompilerError.instantiateError(CompilerError.FUNCTION_WRONG_ATTR, var.getTokenLine(), 0);
             }
 
             if (result != type && error.getErrorCode() == CompilerError.NONE_ERROR) {
@@ -500,7 +527,7 @@ public class Syntactic {
                         mCurrentToken.getTokenEndColumn());
             }
         } catch (InvalidExpressionException ex) {
-            // TODO
+            return CompilerError.instantiateError(CompilerError.EXPRESSION_INCOMPATIBLE_TYPES, mCurrentToken.getTokenLine(), 0);
         }
 
         return error;
@@ -542,7 +569,7 @@ public class Syntactic {
         error = analyseExpression();
         // O resultado da expressao deve ser booleano
         try {
-            int result = mSemantic.EvaluateExpression(mCurrentExpression.toArray(new ExpressionElement[mCurrentExpression.size()]));
+            int result = mSemantic.evaluateExpression(mCurrentExpression.toArray(new ExpressionElement[mCurrentExpression.size()]));
             if (result != Semantic.EXPRESSION_EVALUATION_TYPE_BOOLEAN
                     && error.getErrorCode() == CompilerError.NONE_ERROR) {
                 error = CompilerError.instantiateError(
@@ -551,7 +578,7 @@ public class Syntactic {
                         mCurrentToken.getTokenEndColumn());
             }
         } catch (InvalidExpressionException ex) {
-            // TODO
+            return CompilerError.instantiateError(CompilerError.EXPRESSION_INCOMPATIBLE_TYPES, mCurrentToken.getTokenLine(), 0);
         }
 
         // Nao continua se a analise da expressao ja falhou!
@@ -582,7 +609,7 @@ public class Syntactic {
         CompilerError error = CompilerError.NONE();
 
         error = analyseSimpleExpression();
-
+        if (error.getErrorCode() != CompilerError.NONE_ERROR) return error;
         if (mCurrentToken == null) {
             // Token null - erro
             return CompilerError.instantiateError(CompilerError.UNKNOWN_ERROR, 0, 0);
@@ -647,6 +674,7 @@ public class Syntactic {
             saveExpressionElement(mCurrentToken);
             mCurrentToken = mTokenList.getTokenFromBuffer();
             error = analyseFactor();
+            if (error.getErrorCode() != CompilerError.NONE_ERROR) return error;
             if (mCurrentToken == null) {
                 error = CompilerError.instantiateError(CompilerError.UNKNOWN_ERROR, 0, 0);
                 break;
@@ -732,7 +760,7 @@ public class Syntactic {
         error = analyseExpression();
         // O resultado da expressao deve ser booleano
         try {
-            int result = mSemantic.EvaluateExpression(mCurrentExpression.toArray(new ExpressionElement[mCurrentExpression.size()]));
+            int result = mSemantic.evaluateExpression(mCurrentExpression.toArray(new ExpressionElement[mCurrentExpression.size()]));
             if (result != Semantic.EXPRESSION_EVALUATION_TYPE_BOOLEAN
                     && error.getErrorCode() == CompilerError.NONE_ERROR) {
                 error = CompilerError.instantiateError(
@@ -741,7 +769,7 @@ public class Syntactic {
                         mCurrentToken.getTokenEndColumn());
             }
         } catch (InvalidExpressionException ex) {
-            // TODO
+            return CompilerError.instantiateError(CompilerError.EXPRESSION_INCOMPATIBLE_TYPES, mCurrentToken.getTokenLine(), 0);
         }
         // Nao continua se a analise da expressao ja falhou!
         if (error.getErrorCode() != CompilerError.NONE_ERROR) return error;
@@ -776,6 +804,9 @@ public class Syntactic {
                     mCurrentToken = mTokenList.getTokenFromBuffer();
                     if (mCurrentToken != null && mCurrentToken.getSymbol() == Symbols.SFECHA_PARENTESES) {
                         mCurrentToken = mTokenList.getTokenFromBuffer();
+                        //[GERACAO DE CODIGO]
+                        mCodeGenerator.appendCode("RD");
+                        //[GERACAO DE CODIGO]
                     } else {
                         // Se o token for null, setamos a linha e a coluna como '0' para evitar NullPointerException
                         int line = mCurrentToken == null ? 0 : mCurrentToken.getTokenLine();
@@ -816,6 +847,9 @@ public class Syntactic {
                     mCurrentToken = mTokenList.getTokenFromBuffer();
                     if (mCurrentToken != null && mCurrentToken.getSymbol() == Symbols.SFECHA_PARENTESES) {
                         mCurrentToken = mTokenList.getTokenFromBuffer();
+                        //[GERACAO DE CODIGO]
+                        mCodeGenerator.appendCode("PRN");
+                        //[GERACAO DE CODIGO]
                     } else {
                         // Se o token for null, setamos a linha e a coluna como '0' para evitar NullPointerException
                         int line = mCurrentToken == null ? 0 : mCurrentToken.getTokenLine();

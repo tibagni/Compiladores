@@ -13,7 +13,7 @@ import comp.app.log.C_Log;
 
 
 public class Lexical {
-    private static final int EOF             = 65535; // FIXME arrumar fim de arquivo
+    private static final int EOF             = 65535; // Erro no framework (valor de fim de arquivo e 65535 e nao -1)
     private static final int CARRIEGE_RETURN = 13;
     private static final int LINE_FEED       = 10;
     private static final int TAB	         = 9;

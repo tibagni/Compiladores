@@ -37,6 +37,8 @@ public class CompilerError {
     public static final int DUPLICATED_SUB_ROUTINE          = 25;
     public static final int IDENTIFIER_NOT_FOUND            = 26;
     public static final int EXPRESSION_BOOLEAN_EXPECTED     = 27;
+    public static final int EXPRESSION_INCOMPATIBLE_TYPES   = 28;
+    public static final int FUNCTION_WRONG_ATTR             = 29;
 
     // Outros
     public static final int INVALID_FILE_ERROR              = 100;
@@ -209,6 +211,13 @@ public class CompilerError {
                 return "Boolean esperado mas nao encontrado - linha: " +
                         lineNumber;
 
+            case EXPRESSION_INCOMPATIBLE_TYPES:
+                return "Tipos incompatíveis na expressão - linha: " +
+                		lineNumber;
+
+            case FUNCTION_WRONG_ATTR:
+                return "Nao é permitido atribuir um valor a uma funcao - linha: " +
+                		lineNumber;
 
             /* Erro desconhecido **********************************************/
             case UNKNOWN_ERROR:
