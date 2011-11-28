@@ -265,7 +265,7 @@ public class Syntactic {
         int pos = mCodeGenerator.appendCode("JMP " + label);
         //[GERACAO DE CODIGO]
         mLabel++;
-        int newAllocPos = pos - 1; // Onde a funcao ira alocar seu valor de retorno caso
+        int newAllocPos = pos; // Onde a funcao ira alocar seu valor de retorno caso
                                    // Nenhuma variavel tenha sido alocada em seu escopo exterior
 
         if (mCurrentToken == null) {

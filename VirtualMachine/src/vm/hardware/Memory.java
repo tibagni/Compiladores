@@ -23,7 +23,7 @@ public class Memory {
     // Cache com os valores de <label, numero de linha>
     private HashMap<String, Integer> mLabelsCache = new HashMap<String, Integer>();
 
-    private static final int MEMORY_SIZE = 1024 * 1024;
+    private static final int MEMORY_SIZE = 1024;
 
     private static final int TRUE  = 1;
     private static final int FALSE = 0;

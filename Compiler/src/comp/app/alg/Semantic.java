@@ -573,7 +573,7 @@ public class Semantic {
         if ("nao".equals(element) || "+u".equals(element) || "-u".equals(element) ||
                 "div".equals(element) || "*".equals(element) ||
                 "+".equals(element) || "-".equals(element) || ">".equals(element) ||
-                "<".equals(element) || ">=".equals(element) ||
+                "<".equals(element) || ">=".equals(element) || "!=".equals(element) ||
                 "<=".equals(element) || "=".equals(element) || "e".equals(element)||
                 "ou".equals(element)) {
             return true;
