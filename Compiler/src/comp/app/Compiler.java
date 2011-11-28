@@ -1,10 +1,13 @@
 package comp.app;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 
 import javax.swing.SwingUtilities;
 
+import comp.app.GUI.CompilerGUI;
 import comp.app.alg.CodeGenerator;
 import comp.app.alg.Lexical;
 import comp.app.alg.Semantic;
@@ -95,7 +98,27 @@ public class Compiler extends Thread {
             } else {
                 notifyUIListener(CompilerError.instantiateError(CompilerError.NONE_ERROR, 0, 0));
                 CodeGenerator.getInstance().close();
-                System.out.printf(CodeGenerator.getInstance().getCode());
+                
+                FileOutputStream out = null;
+                String objFile = CompilerGUI.getSourceCodeFile().toString().replace(".lpd", ".obj");
+                System.out.println(objFile);
+                try{
+        		    out = new FileOutputStream(new File(objFile));
+        			out.write(CodeGenerator.getInstance().getCode().getBytes());
+        		} catch (FileNotFoundException ex) {
+        			ex.printStackTrace();
+        		} catch (IOException ex) {
+        			ex.printStackTrace();
+        		}
+
+        		if (out != null) {
+        		    try {
+                        out.close();
+                    } catch (IOException e) {
+                        C_Log.error("Erro ao tentar fechar stream", e);
+                    }
+        		}
+                //System.out.printf(CodeGenerator.getInstance().getCode());
             }
         }
     }

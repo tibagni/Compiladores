@@ -66,7 +66,7 @@ public class CompilerGUI extends JFrame implements UIListener {
 	/*
 	 * Código Fonte
 	 */
-	private File sourceCodeFile = null;
+	private static File sourceCodeFile = null;
 
 	/*
 	 * Padronização dos botões do JOptionPane
@@ -153,6 +153,10 @@ public class CompilerGUI extends JFrame implements UIListener {
         }
 	}
 
+	public static File getSourceCodeFile() {
+		return sourceCodeFile;
+	}
+	
 	private void createMenu() {
 	    final Color bgColor = Color.WHITE;
 
