@@ -101,7 +101,6 @@ public class Compiler extends Thread {
                 
                 FileOutputStream out = null;
                 String objFile = CompilerGUI.getSourceCodeFile().toString().replace(".lpd", ".obj");
-                System.out.println(objFile);
                 try{
         		    out = new FileOutputStream(new File(objFile));
         			out.write(CodeGenerator.getInstance().getCode().getBytes());
@@ -118,7 +117,6 @@ public class Compiler extends Thread {
                         C_Log.error("Erro ao tentar fechar stream", e);
                     }
         		}
-                //System.out.printf(CodeGenerator.getInstance().getCode());
             }
         }
     }
