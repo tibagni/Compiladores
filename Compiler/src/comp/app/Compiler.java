@@ -94,6 +94,8 @@ public class Compiler extends Thread {
                 notifyUIListener(getOutput());
             } else {
                 notifyUIListener(CompilerError.instantiateError(CompilerError.NONE_ERROR, 0, 0));
+                CodeGenerator.getInstance().close();
+                System.out.printf(CodeGenerator.getInstance().getCode());
             }
         }
     }

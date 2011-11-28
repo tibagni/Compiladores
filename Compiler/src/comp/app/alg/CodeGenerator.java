@@ -43,6 +43,58 @@ public class CodeGenerator {
         mCode.add(position, newCode);
     }
 
+    public void putCodeAt(int position, String code) {
+        mCode.add(position, code);
+        mCode.add(position + 1, "\n");
+    }
+
+    public void generateOperationCode(String op) {
+        if ("+".equalsIgnoreCase(op)) {
+            appendCode("ADD");
+        } else if ("-".equalsIgnoreCase(op)) {
+            appendCode("SUB");
+        } else if ("*".equalsIgnoreCase(op)) {
+            appendCode("MULT");
+        } else if ("div".equalsIgnoreCase(op)) {
+            appendCode("DIVI");
+        } else if ("e".equalsIgnoreCase(op)) {
+            appendCode("AND");
+        } else if ("ou".equalsIgnoreCase(op)) {
+            appendCode("OR");
+        } else if ("<".equalsIgnoreCase(op)) {
+            appendCode("CME");
+        } else if (">".equalsIgnoreCase(op)) {
+            appendCode("CMA");
+        } else if ("=".equalsIgnoreCase(op)) {
+            appendCode("CEQ");
+        } else if ("!=".equalsIgnoreCase(op)) {
+            appendCode("CDIF");
+        } else if ("<=".equalsIgnoreCase(op)) {
+            appendCode("CMEQ");
+        } else if (">=".equalsIgnoreCase(op)) {
+            appendCode("CMAQ");
+        }
+    }
+
+    public void incVarAlloc(int positionOfAllocCode) {
+        if (finished) {
+            throw new IllegalArgumentException("Voce nao pode modificar " +
+                    "um codigo concluido");
+        }
+        String code = mCode.remove(positionOfAllocCode);
+        code = code.trim();
+        String[] codeParts = code.split(" ");
+
+        if (!"ALLOC".equalsIgnoreCase((codeParts[0]))) {
+            throw new IllegalArgumentException("Voce nao pode incrementar uma variavel " +
+                    "se o codigo nao for ALLOC");
+        }
+
+        int finalVars = Integer.valueOf(codeParts[2]) + 1;
+        String newCode = codeParts[0] + " " + codeParts[1] + " " + finalVars;
+        mCode.add(positionOfAllocCode, newCode);
+    }
+
     public String getCode() {
         if (!finished) {
             throw new IllegalArgumentException("Antes de gerar o codigo final, voce deve chamar close()");

@@ -211,7 +211,23 @@ public class Semantic {
      * @return true se a entrada for referente a uma funcao, false caso contrario
      */
     public boolean isFunction(int index) {
+        if (index < 0 || index >= mSymbolTable.size()) return false;
         if (mSymbolTable.get(index).mType == SymbolTableEntry.TYPE_FUNCTION) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Dado um indice na tabela de simbolos, retorna se a entrada e referenta
+     * a uma variavel
+     *
+     * @param index Indice na tabela de simbolos
+     * @return true se a entrada for referente a uma variavel, false caso contrario
+     */
+    public boolean isVariable(int index) {
+        if (index < 0 || index >= mSymbolTable.size()) return false;
+        if (mSymbolTable.get(index).mType == SymbolTableEntry.TYPE_VARIABLE) {
             return true;
         }
         return false;
@@ -240,6 +256,10 @@ public class Semantic {
         return false;
     }
 
+    public SymbolTableEntry get(int index) {
+        return mSymbolTable.get(index);
+    }
+
     public static final int EXPRESSION_EVALUATION_TYPE_INVALID = -1;
     public static final int EXPRESSION_EVALUATION_TYPE_INT = 0;
     public static final int EXPRESSION_EVALUATION_TYPE_BOOLEAN = 1;
@@ -254,10 +274,45 @@ public class Semantic {
      * @throws InvalidExpressionException se a analise falhar por algum motivo
      */
     public int evaluateExpression(ExpressionElement[] infixExp) throws InvalidExpressionException {
+        CodeGenerator cg = CodeGenerator.getInstance();
         ExpressionElement[] expression = expressionToPostFix(infixExp);
         Stack<ExpressionElement> stack = new Stack<ExpressionElement>();
         for (ExpressionElement element : expression) {
             if (isOperand(element)) {
+                if (element.mType == EXPRESSION_EVALUATION_TYPE_BOOLEAN) {
+                    //[GERACAO DE CODIGO]
+                    int index = getFirstIndexOf(element.mValue);
+                    if (element.mValue.equalsIgnoreCase("verdadeiro")) {
+                        cg.appendCode("LDC 1");
+                    } else if (element.mValue.equalsIgnoreCase("falso")) {
+                        cg.appendCode("LDC 0");
+                    } else if (isFunction(index)) {
+                        SymbolTableEntry symbol = get(index);
+                        cg.appendCode("CALL " + symbol.mLabel);
+                        cg.appendCode("LDV " + symbol.mAddress);
+                    } else if (isVariable(index)) {
+                        SymbolTableEntry symbol = get(index);
+                        cg.appendCode("LDV " + symbol.mAddress);
+
+                    }
+                    //[GERACAO DE CODIGO]
+                } else {
+                    //[GERACAO DE CODIGO]
+                    int index = getFirstIndexOf(element.mValue);
+                    if (isFunction(index)) {
+                        SymbolTableEntry symbol = get(index);
+                        cg.appendCode("CALL " + symbol.mLabel);
+                        cg.appendCode("LDV " + symbol.mAddress);
+                    } else if (isVariable(index)) {
+                        SymbolTableEntry symbol = get(index);
+                        cg.appendCode("LDV " + symbol.mAddress);
+
+                    } else {
+                        // Numero literal
+                        cg.appendCode("LDC " + element.mValue);
+                    }
+                    //[GERACAO DE CODIGO]
+                }
                 stack.push(element);
             } else if (isOperator(element.mValue)) {
                 ExpressionElement operandToPush = null;
@@ -268,12 +323,20 @@ public class Semantic {
                         throw new InvalidExpressionException();
                     }
                     operandToPush = poppedOperand;
+                    //[GERACAO DE CODIGO]
+                    if ("-u".equalsIgnoreCase(element.mValue)) { // Positivo unario nao precisa gerar codigo
+                        cg.appendCode("INV");
+                    }
+                    //[GERACAO DE CODIGO]
                 } else if ("nao".equalsIgnoreCase(element.mValue)) {
                     ExpressionElement poppedOperand = stack.pop();
                     if (poppedOperand.mType != EXPRESSION_EVALUATION_TYPE_BOOLEAN) {
                         throw new InvalidExpressionException();
                     }
                     operandToPush = poppedOperand;
+                    //[GERACAO DE CODIGO]
+                    cg.appendCode("NEG");
+                    //[GERACAO DE CODIGO]
                 } else if (getOperatorType(element.mValue) == EXPRESSION_EVALUATION_TYPE_INT) {
                     ExpressionElement poppedOperand1 = stack.pop();
                     ExpressionElement poppedOperand2 = stack.pop();
@@ -284,6 +347,9 @@ public class Semantic {
                     // Aqui o valor do elemento nao importa
                     // Cria um elemento so com o tipo
                     operandToPush = new ExpressionElement(getOperatorReturnType(element.mValue));
+                    //[GERACAO DE CODIGO]
+                    cg.generateOperationCode(element.mValue);
+                    //[GERACAO DE CODIGO]
                 } else if (getOperatorType(element.mValue) == EXPRESSION_EVALUATION_TYPE_BOOLEAN) {
                     ExpressionElement poppedOperand1 = stack.pop();
                     ExpressionElement poppedOperand2 = stack.pop();
@@ -294,6 +360,9 @@ public class Semantic {
                     // Aqui o valor do elemento nao importa
                     // Cria um elemento so com o tipo
                     operandToPush = new ExpressionElement(getOperatorReturnType(element.mValue));
+                    //[GERACAO DE CODIGO]
+                    cg.generateOperationCode(element.mValue);
+                    //[GERACAO DE CODIGO]
                 } else {
                     throw new IllegalArgumentException("Fodeu!!!");
                 }
@@ -316,7 +385,8 @@ public class Semantic {
             "<".equalsIgnoreCase(op) ||
             ">=".equalsIgnoreCase(op) ||
             "<=".equalsIgnoreCase(op) ||
-            "=".equalsIgnoreCase(op)) {
+            "=".equalsIgnoreCase(op) ||
+            "!=".equalsIgnoreCase(op)) {
             return EXPRESSION_EVALUATION_TYPE_INT;
         }
         return EXPRESSION_EVALUATION_TYPE_BOOLEAN;
@@ -377,6 +447,7 @@ public class Semantic {
      *          <li>>= - maior ou igual a (entre dois inteiros)</li>
      *          <li><= - menor ou igual a (entre dois inteiros)</li>
      *          <li>= - igual a (entre dois inteiros)</li>
+     *          <li>!= - Diferente de (entre dois inteiros)</li>
      *      </ul>
      *  </li>
      *  <li>Operadores logicos
@@ -440,6 +511,7 @@ public class Semantic {
      *  <li>ou</li>
      *  <li>e</li>
      *  <li>=</li>
+     *  <li>!=</li>
      *  <li><=</li>
      *  <li>>=</li>
      *  <li><</li>
@@ -459,7 +531,7 @@ public class Semantic {
      *  ou zero se as prioridades forem iguais
      */
     private int calculatePriorities(String op1, String op2) {
-        final String[] priorities = {"ou", "e", "=", "<=", ">=", "<", ">",
+        final String[] priorities = {"ou", "e", "=", "!=" , "<=", ">=", "<", ">",
                                      "-", "+", "*", "div", "-u", "+u", "nao"};
 
         if (op1 == null || op2 == null) {

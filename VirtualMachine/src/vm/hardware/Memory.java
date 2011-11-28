@@ -7,14 +7,14 @@ import vm.app.SourceLine;
 
 public class Memory {
     private static Memory sInstance;
-    
+
     private static Object sInstanceLock = new Object();
-    
+
     // Lista que armazena o programa (codigo fonte)
     private ArrayList<SourceLine> mSourceCodeMemory;
     // Program Counter - Aponta endereco da proxima instrucao
     private int mProgramCounter;
-    
+
     // Vetor da memoria
     private int[] mMemoryStack;
     // Topo da pilha (memoria)
@@ -22,8 +22,8 @@ public class Memory {
 
     // Cache com os valores de <label, numero de linha>
     private HashMap<String, Integer> mLabelsCache = new HashMap<String, Integer>();
-    
-    private static final int MEMORY_SIZE = 1024;
+
+    private static final int MEMORY_SIZE = 1024 * 1024;
 
     private static final int TRUE  = 1;
     private static final int FALSE = 0;
@@ -64,7 +64,7 @@ public class Memory {
     }
 
     /* CODIGO FONTE */
-    
+
     /* package */ synchronized void addSourceLine(SourceLine line) {
         mSourceCodeMemory.add(line);
     }
@@ -72,7 +72,7 @@ public class Memory {
     public synchronized SourceLine getSourceLine(int pos) {
         return mSourceCodeMemory.get(pos);
     }
-    
+
     public synchronized int getSourceLineCount() {
         return mSourceCodeMemory.size();
     }
@@ -99,11 +99,11 @@ public class Memory {
             line.mComment = null;
         }
     }
-    
+
     public synchronized void cleanSourceCode() {
     	mSourceCodeMemory.clear();
     }
-    
+
 
     /* package */ int getNextInstructionIndex() {
         return mProgramCounter;
@@ -118,85 +118,85 @@ public class Memory {
 
     /**
      * Carrega constante para o topo da pilha
-     * 
+     *
      * @param k Constante a ser carregada
      * @return Comentario
      */
     public String doLdc(int k) {
         mTop++;
         mMemoryStack[mTop] = k;
-        
+
         return "S:=s+1; M[s]:=k";
     }
-    
+
     /**
      * Carrega valor para o topo da pilha
-     * 
+     *
      * @param n Endereco do valor a ser carregado
      * @return Comentario
      */
     public String doLdv(int n) {
         mTop++;
         mMemoryStack[mTop] = mMemoryStack[n];
-        
+
         return "S:=s+1; M[s]:=M[n]";
     }
-    
+
     /**
      * Soma os valores do topo e topo-1 da pilha
      * e armazena o resultado em topo-1
-     * 
+     *
      * @return Comentario
      */
     public String doAdd() {
         mMemoryStack[mTop - 1] = mMemoryStack[mTop - 1] + mMemoryStack[mTop];
         mTop--;
-        
+
         return "M[s-1]:=M[s-1]+M[s]; s:=s-1";
     }
 
     /**
      * Subtrai os valores do topo e topo-1 da pilha
      * e armazena o resultado em topo-1
-     * 
+     *
      * @return Comentario
      */
     public String doSub() {
         mMemoryStack[mTop - 1] = mMemoryStack[mTop - 1] - mMemoryStack[mTop];
         mTop--;
-        
+
         return "M[s-1]:=M[s-1]-M[s]; s:=s-1";
     }
 
     /**
      * Multiplica os valores do topo e topo-1 da pilha
      * e armazena o resultado em topo-1
-     * 
+     *
      * @return Comentario
      */
     public String doMult() {
         mMemoryStack[mTop - 1] = mMemoryStack[mTop - 1] * mMemoryStack[mTop];
         mTop--;
-        
+
         return "M[s-1]:=M[s-1]*M[s]; s:=s-1";
     }
 
     /**
      * Divide os valores do topo e topo-1 da pilha
      * e armazena o resultado em topo-1
-     * 
+     *
      * @return Comentario
      */
     public String doDivi() {
         mMemoryStack[mTop - 1] = mMemoryStack[mTop - 1] / mMemoryStack[mTop];
         mTop--;
-        
+
         return "M[s-1]:=M[s-1] div M[s]; s:=s-1";
     }
 
     /**
      * Inverte o sinal do valor armazenado no topo da pilha
-     * 
+     *
      * @return Comentario
      */
      public String doInv() {
@@ -207,7 +207,7 @@ public class Memory {
 
      /**
       * Conjuncao
-      * 
+      *
       * @return Comentario
       */
      public String doAnd() {
@@ -223,7 +223,7 @@ public class Memory {
 
      /**
       * Disjuncao
-      * 
+      *
       * @return Comentario
       */
     public String doOr() {
@@ -239,7 +239,7 @@ public class Memory {
 
     /**
      * Nega o valor logico armazenado no topo da pilha
-     * 
+     *
      * @return Comentario
      */
     public String doNeg() {
@@ -252,7 +252,7 @@ public class Memory {
      * Compara topo e topo-1
      * se topo-1 menor armazena 1 (true) em topo-1
      * senao armazena 0 (false)
-     * 
+     *
      * @return Comentario
      */
     public String doCme() {
@@ -262,14 +262,14 @@ public class Memory {
             mMemoryStack[mTop - 1] = FALSE;
         }
         mTop--;
-        
+
         return "se M[s-1]<M[s]  então M[s-1]:=1  senão M[s-1]:=0; s:=s-1";
     }
     /**
      * Compara topo e topo-1
      * se topo-1 maior armazena 1 (true) em topo-1
      * senao armazena 0 (false)
-     * 
+     *
      * @return Comentario
      */
     public String doCma() {
@@ -286,7 +286,7 @@ public class Memory {
      * Compara topo e topo-1
      * se forem iguais armazena 1 (true) em topo-1
      * senao armazena 0 (false)
-     * 
+     *
      * @return Comentario
      */
     public String doCeq() {
@@ -303,7 +303,7 @@ public class Memory {
      * Compara topo e topo-1
      * se forem diferentes armazena 1 (true) em topo-1
      * senao armazena 0 (false)
-     * 
+     *
      * @return Comentario
      */
     public String doCdif() {
@@ -320,7 +320,7 @@ public class Memory {
      * Compara topo e topo-1
      * se topo-1 menor igual armazena 1 (true) em topo-1
      * senao armazena 0 (false)
-     * 
+     *
      * @return Comentario
      */
     public String doCmeq() {
@@ -337,7 +337,7 @@ public class Memory {
      * Compara topo e topo-1
      * se topo-1 maior igual armazena 1 (true) em topo-1
      * senao armazena 0 (false)
-     * 
+     *
      * @return Comentario
      */
     public String doCmaq() {
@@ -353,7 +353,7 @@ public class Memory {
 
     /**
      * Termina o programa
-     * 
+     *
      * @return Comentario
      */
     public String doHlt() {
@@ -362,7 +362,7 @@ public class Memory {
 
     /**
      * Armazena valor do topo da pilha em n
-     * 
+     *
      * @param n Endereco para armazenar o valor
      * @return Comentario
      */
@@ -376,7 +376,7 @@ public class Memory {
 
     /**
      * Armazena valor lido no topo da pilha
-     * 
+     *
      * @param n Valor lido
      * @return Comentario
      */
@@ -389,7 +389,7 @@ public class Memory {
 
     /**
      * Desvia execucao do programa para a posicao t
-     * 
+     *
      * @param t Posicao
      * @return Comentario
      */
@@ -402,7 +402,7 @@ public class Memory {
 
     /**
      * Mostra Valor armazenado no topo da pilha
-     * 
+     *
      * @return Comentario
      */
     public String doPrn() {
@@ -414,7 +414,7 @@ public class Memory {
 
     /**
      * Aloca memoria
-     * 
+     *
      * @param m Posicao inicial dos valores a serem armazenados
      * @param n Posicoes a serem alocadas
      * @return Comentario
@@ -429,7 +429,7 @@ public class Memory {
 
     /**
      * Desaloca memoria
-     * 
+     *
      * @param m Posicao inicial dos valores armazenados
      * @param n Posicoes a serem desalocadas
      * @return Comentario
@@ -444,7 +444,7 @@ public class Memory {
 
     /**
      * Retorno de funcao
-     * 
+     *
      * @return Comentario
      */
     public String doReturn() {
@@ -456,7 +456,7 @@ public class Memory {
 
     /**
      * Chamada de funcao
-     * 
+     *
      * @param t Endereco da funcao
      * @return Comentario
      */
@@ -470,7 +470,7 @@ public class Memory {
 
     /**
      * Jump condicional (se falso)
-     * 
+     *
      * @param t Endereco em que o programa sera desviado
      * @returnComentario
      */

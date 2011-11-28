@@ -39,6 +39,8 @@ public class CompilerError {
     public static final int EXPRESSION_BOOLEAN_EXPECTED     = 27;
     public static final int EXPRESSION_INCOMPATIBLE_TYPES   = 28;
     public static final int FUNCTION_WRONG_ATTR             = 29;
+    public static final int WRONG_VAR_TYPE                  = 30;
+    public static final int WRONG_VAR_FUNC_TYPE             = 31;
 
     // Outros
     public static final int INVALID_FILE_ERROR              = 100;
@@ -218,6 +220,15 @@ public class CompilerError {
             case FUNCTION_WRONG_ATTR:
                 return "Nao é permitido atribuir um valor a uma funcao - linha: " +
                 		lineNumber;
+
+            case WRONG_VAR_TYPE:
+                return "Tipo incorreto ou não é variável - linha: " +
+                        lineNumber;
+
+            case WRONG_VAR_FUNC_TYPE:
+                return "Tipo de dado incorreto para este caso - linha: " +
+                        lineNumber;
+
 
             /* Erro desconhecido **********************************************/
             case UNKNOWN_ERROR:
