@@ -1,6 +1,7 @@
 package comp.app.alg;
 
 import java.util.ArrayList;
+import java.util.EmptyStackException;
 
 import comp.app.Symbols;
 import comp.app.Token;
@@ -589,6 +590,10 @@ public class Syntactic {
             }
         } catch (InvalidExpressionException ex) {
             return CompilerError.instantiateError(CompilerError.EXPRESSION_INCOMPATIBLE_TYPES, mCurrentToken.getTokenLine(), 0);
+        } catch (EmptyStackException ex) {
+            // Pode acontecer durante a analise semantica da expressao
+            // se ocorrer, a expressao esta mal formada (Provavelmente um erro sintatico que passou despercebido)
+            error = CompilerError.instantiateError(CompilerError.MALFORMED_EXPRESSION, mCurrentToken.getTokenLine(), 0);
         }
         SymbolTableEntry symbol = mSemantic.get(index);
         //[ANALISE SEMANTICA]
@@ -607,7 +612,7 @@ public class Syntactic {
             // Se o token for null, setamos a linha e a coluna como '0' para evitar NullPointerException
             int line = id == null ? 0 : id.getTokenLine();
             int col  = id == null ? 0 : id.getTokenEndColumn();
-            error = CompilerError.instantiateError(CompilerError.INVALID_PROC_FUNC_NAME, line, col);
+            return CompilerError.instantiateError(CompilerError.INVALID_PROC_FUNC_NAME, line, col);
         }
         //[ANALISE SEMANTICA]
         int index = mSemantic.getFirstIndexOf(id.getLexema());
@@ -684,6 +689,10 @@ public class Syntactic {
             }
         } catch (InvalidExpressionException ex) {
             return CompilerError.instantiateError(CompilerError.EXPRESSION_INCOMPATIBLE_TYPES, mCurrentToken.getTokenLine(), 0);
+        } catch (EmptyStackException ex) {
+            // Pode acontecer durante a analise semantica da expressao
+            // se ocorrer, a expressao esta mal formada (Provavelmente um erro sintatico que passou despercebido)
+            error = CompilerError.instantiateError(CompilerError.MALFORMED_EXPRESSION, mCurrentToken.getTokenLine(), 0);
         }
         //[ANALISE SEMANTICA]
         // Nao continua se a analise da expressao ja falhou!
@@ -896,6 +905,10 @@ public class Syntactic {
             }
         } catch (InvalidExpressionException ex) {
             error = CompilerError.instantiateError(CompilerError.EXPRESSION_INCOMPATIBLE_TYPES, mCurrentToken.getTokenLine(), 0);
+        } catch (EmptyStackException ex) {
+            // Pode acontecer durante a analise semantica da expressao
+            // se ocorrer, a expressao esta mal formada (Provavelmente um erro sintatico que passou despercebido)
+            error = CompilerError.instantiateError(CompilerError.MALFORMED_EXPRESSION, mCurrentToken.getTokenLine(), 0);
         }
         //[ANALISE SEMANTICA]
         // Nao continua se a analise da expressao ja falhou!

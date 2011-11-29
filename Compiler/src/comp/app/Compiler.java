@@ -98,9 +98,14 @@ public class Compiler extends Thread {
             } else {
                 notifyUIListener(CompilerError.instantiateError(CompilerError.NONE_ERROR, 0, 0));
                 CodeGenerator.getInstance().close();
-                
+
                 FileOutputStream out = null;
-                String objFile = CompilerGUI.getSourceCodeFile().toString().replace(".lpd", ".obj");
+                String objFile;
+                if (CompilerGUI.getSourceCodeFile().toString().endsWith(".lpd")) {
+                    objFile = CompilerGUI.getSourceCodeFile().toString().replace(".lpd", ".obj");
+                } else {
+                    objFile = CompilerGUI.getSourceCodeFile().toString() + ".obj";
+                }
                 try{
         		    out = new FileOutputStream(new File(objFile));
         			out.write(CodeGenerator.getInstance().getCode().getBytes());

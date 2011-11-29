@@ -156,7 +156,7 @@ public class CompilerGUI extends JFrame implements UIListener {
 	public static File getSourceCodeFile() {
 		return sourceCodeFile;
 	}
-	
+
 	private void createMenu() {
 	    final Color bgColor = Color.WHITE;
 
@@ -224,7 +224,7 @@ public class CompilerGUI extends JFrame implements UIListener {
 		 */
 		sourceCodePanel = new JPanel();
 
-		sourceCodeArea = new JTextArea(32,112);
+		sourceCodeArea = new JTextArea(30,112);
         Border padding = BorderFactory.createEmptyBorder(0, 5, 0, 5);
 		sourceCodeArea.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 13));
 		sourceCodeArea.setBorder(padding);
